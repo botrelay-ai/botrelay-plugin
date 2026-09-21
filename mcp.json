@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "botrelay": {
+      "command": "bash",
+      "args": ["${CURSOR_PLUGIN_ROOT}/scripts/launch.sh"],
+      "cwd": "${CURSOR_PLUGIN_ROOT}",
+      "env": {
+        "BOTRELAY_API_URL": "${BOTRELAY_API_URL}",
+        "BOTRELAY_API_KEY": "${BOTRELAY_API_KEY}",
+        "BOTRELAY_VAULT_KEY": "${BOTRELAY_VAULT_KEY}",
+        "BOTRELAY_PYTHON": "${BOTRELAY_PYTHON}"
+      }
+    }
+  }
+}

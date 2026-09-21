@@ -1,0 +1,17 @@
+{
+  "name": "botrelay",
+  "owner": {
+    "name": "BotRelay",
+    "email": "hello@botrelay.ai"
+  },
+  "metadata": {
+    "description": "Cursor plugin for BotRelay — zero-knowledge vault for AI agents"
+  },
+  "plugins": [
+    {
+      "name": "botrelay",
+      "source": ".",
+      "description": "Zero-knowledge vault MCP for AI agents"
+    }
+  ]
+}

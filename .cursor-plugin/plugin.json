@@ -1,0 +1,62 @@
+{
+  "name": "botrelay",
+  "displayName": "BotRelay",
+  "version": "0.1.0",
+  "description": "Secure password vault for AI agents. Empower agents to do more while keeping your secrets safe. Visit https://botrelay.ai for more information.",
+  "author": {
+    "name": "BotRelay"
+  },
+  "homepage": "https://botrelay.ai",
+  "repository": "https://github.com/chouseknecht/botrelay-plugin",
+  "keywords": [
+    "botrelay",
+    "vault",
+    "secrets",
+    "mcp",
+    "zero-knowledge",
+    "agents",
+    "security"
+  ],
+  "category": "integrations",
+  "tags": [
+    "secrets",
+    "vault",
+    "mcp"
+  ],
+  "logo": "assets/logo.svg",
+  "skills": "./skills/",
+  "rules": "./rules/",
+  "mcpServers": "./mcp.json",
+  "variables": {
+    "type": "object",
+    "properties": {
+      "BOTRELAY_API_URL": {
+        "type": "string",
+        "title": "BotRelay API URL",
+        "description": "BotRelay API base URL for this install.",
+        "default": "https://api.botrelay.ai"
+      },
+      "BOTRELAY_API_KEY": {
+        "type": "string",
+        "title": "BotRelay API Key",
+        "description": "API Key for accessing the BotRelay vault."
+      },
+      "BOTRELAY_VAULT_KEY": {
+        "type": "string",
+        "title": "BotRelay Vault Key",
+        "description": "Key used to decrypts ciphertext locally."
+      },
+      "BOTRELAY_PYTHON": {
+        "type": "string",
+        "title": "Optional BotRelay Python Path",
+        "description": "Optional override. Leave empty to use botrelay-mcp on PATH or the checkout .venv."
+      }
+    },
+    "required": [
+      "BOTRELAY_API_URL",
+      "BOTRELAY_API_KEY",
+      "BOTRELAY_VAULT_KEY"
+    ]
+  },
+  "license": "MIT"
+}
