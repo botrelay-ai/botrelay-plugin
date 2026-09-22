@@ -43,7 +43,7 @@ Install `botrelay-mcp` before you add or enable the plugin. Cursor starts the MC
 
 ## How it works
 
-The plugin launches a local MCP server that agents use to open the vault. The server fetches ciphertext from the BotRelay API and decrypts it on the local machine. The vault key is never transmitted, and decryption is always done locally.
+The plugin launches a local MCP server that agents use to open the vault. It starts that server with `./scripts/launch.sh` relative to the plugin root, so hosts that do not expand `CURSOR_PLUGIN_ROOT` still work. The server fetches ciphertext from the BotRelay API and decrypts it on the local machine. The vault key is never transmitted, and decryption is always done locally.
 
 ## License
 

@@ -5,15 +5,11 @@ import re
 from pathlib import Path
 
 PLUGIN = Path(__file__).resolve().parents[1]
-REPO = PLUGIN.parents[1]
 CURSOR_MANIFEST = PLUGIN / ".cursor-plugin" / "plugin.json"
-GROK_MANIFEST = PLUGIN / ".grok-plugin" / "plugin.json"
 MCP_JSON = PLUGIN / "mcp.json"
-DOT_MCP_JSON = PLUGIN / ".mcp.json"
 REQUIRED_FIELDS = ("BOTRELAY_API_URL", "BOTRELAY_API_KEY", "BOTRELAY_VAULT_KEY")
 OPTIONAL_FIELDS = ("BOTRELAY_PYTHON",)
 SETUP_FIELDS = REQUIRED_FIELDS + OPTIONAL_FIELDS
-PLUGIN_ROOT_VARS = frozenset({"CURSOR_PLUGIN_ROOT", "GROK_PLUGIN_ROOT", "CLAUDE_PLUGIN_ROOT"})
 LAUNCHER_NAME = "scripts/launch.sh"
 
 
@@ -42,13 +38,6 @@ def test_cursor_manifest_declares_setup_fields() -> None:
     assert not extra
 
 
-def test_grok_manifest_pins_dot_mcp() -> None:
-    manifest = _load(GROK_MANIFEST)
-    assert manifest["name"] == "botrelay"
-    assert manifest["mcpServers"] == "./.mcp.json"
-    assert "variables" not in manifest  # Cursor-only schema; Grok uses the same env via .mcp.json
-
-
 def _configured_launcher(server: dict) -> str:
     parts = [server.get("command") or "", *(server.get("args") or [])]
     for part in parts:
@@ -59,48 +48,38 @@ def _configured_launcher(server: dict) -> str:
 
 def test_mcp_configs_wire_env_like_apps_mcp() -> None:
     cursor_mcp = _load(MCP_JSON)
-    grok_mcp = _load(DOT_MCP_JSON)
-    assert cursor_mcp == grok_mcp
     server = cursor_mcp["mcpServers"]["botrelay"]
     assert server["command"] == "bash"
+    assert server["args"] == ["./scripts/launch.sh"]
+    assert "cwd" not in server
     assert (PLUGIN / "scripts" / "launch.sh").is_file()
     for name in SETUP_FIELDS:
         assert server["env"][name] == "${" + name + "}"
     raw = json.dumps(server)
     for match in re.findall(r"\$\{([^}]+)\}", raw):
-        assert match in SETUP_FIELDS or match in PLUGIN_ROOT_VARS
+        assert match in SETUP_FIELDS
+    assert "CURSOR_PLUGIN_ROOT" not in raw
 
 
-def test_mcp_launcher_is_plugin_rooted_not_repo_cwd() -> None:
-    """Team Marketplace spawns with cwd = monorepo root, not plugins/botrelay.
+def test_mcp_launcher_is_relative_to_plugin_root() -> None:
+    """Hosts that leave ${CURSOR_PLUGIN_ROOT} literal still launch from the plugin root.
 
-    `./scripts/launch.sh` becomes <checkout>/scripts/launch.sh and 404s.
+    `./scripts/launch.sh` is resolved relative to the plugin directory. launch.sh
+    derives PLUGIN_ROOT from its own path.
     """
-    assert not (REPO / LAUNCHER_NAME).exists()
     assert (PLUGIN / LAUNCHER_NAME).is_file()
-    for path in (MCP_JSON, DOT_MCP_JSON):
-        server = _load(path)["mcpServers"]["botrelay"]
-        configured = _configured_launcher(server)
-        assert not configured.startswith("./"), configured
-        assert "./scripts/launch.sh" not in configured
-        assert "${CURSOR_PLUGIN_ROOT}/" in configured or "${GROK_PLUGIN_ROOT}/" in configured
-        _, sep, rel = configured.partition("}/")
-        assert sep, configured
-        assert rel == LAUNCHER_NAME
-        assert (PLUGIN / rel).is_file()
-        assert not (REPO / rel).exists()
-        cwd = server.get("cwd")
-        assert cwd in {f"${{{name}}}" for name in PLUGIN_ROOT_VARS}
+    server = _load(MCP_JSON)["mcpServers"]["botrelay"]
+    configured = _configured_launcher(server)
+    assert configured == "./" + LAUNCHER_NAME
+    assert "CURSOR_PLUGIN_ROOT" not in configured
+    assert "cwd" not in server
 
 
-def test_private_marketplaces_point_at_plugin() -> None:
-    cursor_market = _load(REPO / ".cursor-plugin" / "marketplace.json")
-    grok_market = _load(REPO / ".grok-plugin" / "marketplace.json")
-    assert cursor_market["name"] == "botrelay-private"
-    assert cursor_market["plugins"][0]["source"] == "plugins/botrelay"
-    assert grok_market["plugins"][0]["source"]["path"] == "./plugins/botrelay"
-    for blob in (json.dumps(cursor_market), json.dumps(grok_market)):
-        assert "marketplace/publish" not in blob
+def test_marketplace_points_at_plugin_root() -> None:
+    market = _load(PLUGIN / ".cursor-plugin" / "marketplace.json")
+    assert market["name"] == "botrelay"
+    assert market["plugins"][0]["source"] == "."
+    assert "marketplace/publish" not in json.dumps(market)
 
 
 def test_skill_and_rule_frontmatter() -> None:
