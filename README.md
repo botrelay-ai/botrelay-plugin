@@ -8,7 +8,7 @@ This repository is the **public Cursor plugin** only.
 
 ## Install
 
-Cursor starts the MCP server when the plugin is enabled. Marketplace `mcp.json` runs `bash` with `${CURSOR_PLUGIN_ROOT}/scripts/launch.sh`, and that script in turn reads `~/.config/botrelay/agent.env` to get the API Key and Vault Key values.
+Cursor starts the MCP server when the plugin is enabled. Marketplace `mcp.json` runs `bash` with `${CURSOR_PLUGIN_ROOT}/scripts/launch.sh`, which in turn reads `~/.config/botrelay/agent.env` to get the API Key and Vault Key values.
 
 1. From a terminal, install the MCP server:
 
