@@ -10,9 +10,18 @@ import sys
 from pathlib import Path
 from typing import IO, Any
 
-from botrelay.crypto import random_key, vault_key_to_env
+import pytest
 
-REPO = Path(__file__).resolve().parents[3]
+# This module targets the monorepo layout (plugins/botrelay/tests/test_launch.py).
+# The public plugin repo keeps a copy; plugin-local coverage lives in test_mcp_launch.py.
+_HERE = Path(__file__).resolve()
+if len(_HERE.parents) < 4:
+    pytest.skip("monorepo layout required for test_launch.py", allow_module_level=True)
+
+pytest.importorskip("botrelay.crypto")
+from botrelay.crypto import random_key, vault_key_to_env  # noqa: E402
+
+REPO = _HERE.parents[3]
 PLUGIN = REPO / "plugins" / "botrelay"
 LAUNCH = PLUGIN / "scripts" / "launch.sh"
 INSTALL = PLUGIN / "scripts" / "install-local.sh"
