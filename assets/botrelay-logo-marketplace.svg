@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="BotRelay">
+  <!-- White rounded plate (squircle-ish rounded rect) -->
+  <rect x="7" y="7" width="242" height="242" rx="36" ry="36" fill="#FFFFFF"/>
+  <!-- Black disc -->
+  <circle cx="128" cy="128" r="86" fill="#000000"/>
+  <!-- White keyhole -->
+  <circle cx="128" cy="114" r="21" fill="#FFFFFF"/>
+  <path d="M116.5 122 L139.5 122 L146.5 167 L109.5 167 Z" fill="#FFFFFF"/>
+  <ellipse cx="128" cy="167" rx="18.5" ry="6.5" fill="#FFFFFF"/>
+</svg>
