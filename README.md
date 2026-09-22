@@ -10,6 +10,8 @@ This repository is the **public Cursor plugin** only.
 
 When this plugin is enabled, Cursor and Grok start the same MCP server. `botrelay_mcp` reads `~/.config/botrelay/agent.env` for the API key and vault key. Before enabling the plugin, install the `botrelay-mcp` package and run the configure step. The following walks through it:
 
+The venv and `agent.env` belong to the machine that runs the agent. Cursor on a Mac and a Grok Bot agent do not share them. See [Grok Bot](#grok-bot).
+
 1. From a terminal, install the MCP server and CLI:
 
    ```bash
@@ -53,6 +55,34 @@ The plugin launches a local MCP server that agents use to open the vault. Grok a
 
 The server fetches ciphertext from the BotRelay API and decrypts it on the local machine. The vault key is never transmitted, and decryption is always done locally.
 
+## Grok Bot
+
+Grok Bot agents run browser tasks on a shared virtual machine. Each agent has its own desktop and browser window on that VM. They share one filesystem there, including `~/.venvs/botrelay` and `~/.config/botrelay/agent.env`. The VM is not your laptop. Cursor's `~/.venvs/botrelay` and `~/.config/botrelay/agent.env` on a Mac do not carry over.
+
+For BotRelay to work for those agents:
+
+1. Install the BotRelay plugin from the Marketplace. Until it is listed, use **Add Marketplace**, choose **Import from GitHub**, and paste `https://github.com/botrelay-ai/botrelay-plugin`.
+
+2. On the Grok virtual machine, once, open any agent's computer (it is the same host) and run:
+
+   ```bash
+   python3 -m venv ~/.venvs/botrelay
+   ~/.venvs/botrelay/bin/pip install botrelay-mcp botrelay-cli
+   ~/.venvs/botrelay/bin/botrelay agent configure
+   ```
+
+   The CLI prompts in that terminal. It writes `~/.config/botrelay/agent.env` with mode `0600`. Do not paste the API key or vault key into chat.
+
+3. Reload the BotRelay MCP server so `botrelay_mcp` loads `agent.env`. If the status stays Not connected, fully quit and reopen. Reload Window is not enough.
+
+After that, every agent on that Grok account can use the vault. They share the one venv and `agent.env` on the VM. They do not each install or configure.
+
+Cursor on a Mac is a separate machine. Configuring BotRelay there does not set up Grok, and configuring the Grok VM does not set up Cursor. The same API key and vault key are fine when both machines use the same agent vault. You are writing a second local `agent.env` on the Grok host.
+
+The plugin starts `python -m botrelay_mcp` from `~/.venvs/botrelay` on the machine that is running the agent. The `botrelay_mcp` package loads that machine's `agent.env`.
+
+Browser logins on the VM are separate from your Mac browser. Sites often treat the VM as a new device and ask for a one-time code.
+
 ## Troubleshooting
 
 ### Not connected after Reload
@@ -71,7 +101,11 @@ stderr from a failed launch names the `~/.venvs/botrelay` install and `BOTRELAY_
 
 ### MCP exits before tools are listed
 
-`BOTRELAY_API_KEY` and `BOTRELAY_VAULT_KEY` are still missing after `botrelay_mcp` loads `~/.config/botrelay/agent.env`. The MCP package must load that file on startup; this plugin's `mcp.json` does not source it. Run `~/.venvs/botrelay/bin/botrelay agent configure`, then reload the BotRelay MCP server. This plugin has no Configure variables.
+`BOTRELAY_API_KEY` and `BOTRELAY_VAULT_KEY` are still missing after `botrelay_mcp` loads `~/.config/botrelay/agent.env`. The MCP package must load that file on startup; this plugin's `mcp.json` does not source it. Run `~/.venvs/botrelay/bin/botrelay agent configure`, then reload the BotRelay MCP server. This plugin has no Configure variables. On a Grok agent, that file has to exist on the Grok virtual machine. See [Grok Bot](#grok-bot).
+
+### Works in Cursor, fails in a Grok agent
+
+A green BotRelay status in Cursor on your Mac does not mean the Grok virtual machine has `botrelay-mcp` or `~/.config/botrelay/agent.env`. Those paths are local to each machine. See [Grok Bot](#grok-bot).
 
 ## License
 

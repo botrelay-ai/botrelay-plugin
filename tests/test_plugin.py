@@ -281,6 +281,21 @@ def test_readme_documents_agent_env_and_launch() -> None:
     assert "botrelay-mcp: not found" in readme
     assert "same `mcp.json`" in trouble
     assert "same Marketplace `mcp.json`" in how
+    grok = readme.split("## Grok Bot", 1)[1].split("## ", 1)[0]
+    assert "shared virtual machine" in grok
+    assert "own desktop and browser" in grok
+    assert "~/.venvs/botrelay" in grok
+    assert "~/.config/botrelay/agent.env" in grok
+    assert "0600" in grok
+    assert "do not paste the api key or vault key into chat" in grok.lower()
+    assert "every agent on that Grok account" in grok
+    assert "do not each install or configure" in grok
+    assert "separate machine" in grok
+    assert "second local `agent.env`" in grok
+    assert "new device" in grok
+    assert "[Grok Bot](#grok-bot)" in readme.split("## Grok Bot", 1)[0]
+    assert "Works in Cursor, fails in a Grok agent" in trouble
+    assert "[Grok Bot](#grok-bot)" in trouble
 
 
 def test_marketplace_points_at_plugin_root() -> None:
