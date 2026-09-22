@@ -8,7 +8,7 @@ This repository is the **public Cursor plugin** only.
 
 ## Install
 
-Cursor starts the MCP server when the plugin is enabled. Marketplace `mcp.json` runs `bash` with `${CURSOR_PLUGIN_ROOT}/scripts/launch.sh`, which in turn reads `~/.config/botrelay/agent.env` to get the API Key and Vault Key values.
+When this plugin is enabled Cursor starts an MCP server which expects to read `~/.config/botrelay/agent.env` to get the API Key and Vault Key values. So before enabling the plugin within the Cursor Marketplace, you must first install the `botrelay-mcp` server package and run the configure step to input the credential keys. The following will walk you through it:
 
 1. From a terminal, install the MCP server:
 
@@ -19,7 +19,7 @@ Cursor starts the MCP server when the plugin is enabled. Marketplace `mcp.json` 
 
    On Windows, `pip` installs console scripts under the venv `Scripts` directory. The launcher also checks `~/.venvs/botrelay/Scripts/python.exe`. Activating the venv in a terminal does not change the `PATH` Cursor uses when it starts the plugin.
 
-2. Write this agent's credentials locally. The CLI prompts in the terminal. Do not paste the API key or vault key into chat:
+2. Store the access credentials locally. The CLI prompts in the terminal. Do NOT paste the API key or vault key into chat:
 
    ```bash
    source ~/.venvs/botrelay/bin/activate
