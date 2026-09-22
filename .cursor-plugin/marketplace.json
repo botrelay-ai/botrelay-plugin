@@ -1,17 +1,17 @@
 {
-  "name": "BotRelay",
+  "name": "botrelay",
   "owner": {
     "name": "BotRelay",
     "email": "hello@botrelay.ai"
   },
   "metadata": {
-    "description": "A password manager built for AI agents. Give agents their own passsword vault, only the secrets they need, and the tools for secure access. BotRelay empowers your agents to do more, while keeping your secrets safe."
+    "description": "A password manager built for AI agents. Give agents their own password vault, only the secrets they need, and the tools for secure access. BotRelay empowers your agents to do more, while keeping your secrets safe."
   },
   "plugins": [
     {
-      "name": "BotRelay",
+      "name": "botrelay",
       "source": ".",
-      "description": "A password manager built for AI agents. Give agents their own passsword vault, only the secrets they need, and the tools for secure access. BotRelay empowers your agents to do more, while keeping your secrets safe.""
+      "description": "A password manager built for AI agents. Give agents their own password vault, only the secrets they need, and the tools for secure access. BotRelay empowers your agents to do more, while keeping your secrets safe."
     }
   ]
 }

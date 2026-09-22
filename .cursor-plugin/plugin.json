@@ -49,7 +49,7 @@
       "BOTRELAY_PYTHON": {
         "type": "string",
         "title": "Optional BotRelay Python Path",
-        "description": "Leave empty to use botrelay-mcp on PATH or enter the checkout .venv."
+        "description": "Optional path to the Python executable that has botrelay-mcp installed. Leave empty when botrelay-mcp is already on PATH."
       }
     },
     "required": [

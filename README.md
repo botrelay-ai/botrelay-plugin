@@ -1,12 +1,10 @@
 # BotRelay Cursor plugin
 
-BotRelay is a password manager built for AI agents. Give agents their own password vault, only the secrets they need, and the tools for secure access.Ciphertext comes from the API; decryption stays on your machine.
+BotRelay is a password manager built for AI agents. Give agents their own password vault, only the secrets they need, and the tools for secure access. Ciphertext comes from the API; decryption stays on your machine.
 
 Before using this plugin, visit [botrelay.ai](https://botrelay.ai) to create an account, set up a password vault, and obtain an API key and a vault key.
 
-This repository is the **public Cursor plugin** only. 
-
-The plugin launches a local MCP server that your agents will use to access the BotRelay API. Through the server they'll be able to open the password Vault and get passwords. Passwords are transmitted in their encrypted form, known as Ciphertext, from the BotRelay API to the local server and decrypted locally by server. The vault key never gets transmitted and decryption stays local on your machine.
+This repository is the **public Cursor plugin** only. It launches a local MCP server that agents use to open the vault. The server fetches ciphertext from the BotRelay API and decrypts it on your machine. The vault key never leaves this machine.
 
 ## Install
 
@@ -29,6 +27,8 @@ Install `botrelay-mcp` before you add or enable the plugin. Cursor starts the MC
    On Windows, activate that venv with `Scripts\activate` (Command Prompt) or `Scripts\Activate.ps1` (PowerShell). `pip` installs `botrelay-mcp.exe` in the venv `Scripts` directory.
 
 2. In Cursor, open **Customize** in the sidebar, then **Browse Marketplace**. Find **BotRelay**, select **Install**, and choose a user or project scope.
+
+   Until BotRelay appears in the Marketplace, use **Import from GitHub** and paste `https://github.com/botrelay-ai/botrelay-plugin`.
 
    Grok Bot has its own plugin install path. The Customize steps above are for Cursor.
 
