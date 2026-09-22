@@ -43,19 +43,23 @@ The venv and `agent.env` belong to the machine that runs the agent. Cursor on a 
 
 4. Under MCPs, botrelay should have a green status with the message `3 tools enabled`. If you ran `botrelay agent configure` after enabling the plugin, turn the plugin off and on or click Reload so `botrelay_mcp` loads `agent.env`. If the status stays Not connected, or tools fail with Not connected, fully quit Cursor and reopen it. Reload Window is not enough.
 
-5. In chat, use **Try in Chat** or the `/botrelay-login` command. The prompt is: “Log into BotRelay and get the vault information.” The agent checks whether `~/.venvs/botrelay` can `import botrelay_mcp` and whether `~/.config/botrelay/agent.env` exists. If `get_vault` already succeeds, it skips install and configure. Otherwise it installs with `pip install -U botrelay-mcp botrelay-cli`, runs `botrelay agent configure` (a real TTY with desktop handoff, or secure secret inputs and `--api-url`, `--api-key`, `--vault-key`), reloads MCP, calls `get_vault`, and reports only the vault id, name, and labels. On a Grok agent that check is the shared VM, not the Mac. See [Grok Bot](#grok-bot).
+5. In chat, use **Try in Chat** or the `/botrelay-login` command. The prompt is: “Log into BotRelay and get the vault information.” The agent will check if the local MCP server is available and access credentials have been configured, and then it will call `get_vault`.
+
+   During the first login, the agent checks whether `~/.venvs/botrelay` can `import botrelay_mcp` and whether `~/.config/botrelay/agent.env` exists. If `get_vault` already succeeds, it skips install and configure. Otherwise it installs with `pip install -U botrelay-mcp botrelay-cli`, runs `botrelay agent configure` (a real TTY with desktop handoff, or secure secret inputs and `--api-url`, `--api-key`, `--vault-key`), reloads MCP, calls `get_vault`, and reports only the vault id, name, and labels.
+
+   **NOTE:** For a Grok Bot agent, this process is performed on the shared VM, not your local machine. See [Grok Bot](#grok-bot).
 
 ## How it works
 
-The plugin launches a local MCP server that agents use to open the vault. Grok and Cursor both use the same Marketplace `mcp.json`. That file starts the server with `bash -lc`, which execs `python -m botrelay_mcp` from the documented customer install (`$HOME/.venvs/botrelay`). If `BOTRELAY_PYTHON` names an interpreter that can `import botrelay_mcp`, that interpreter is used. Otherwise the command tries `$HOME/.venvs/botrelay/bin/python3`, then `…/bin/python`, then `…/Scripts/python.exe`.
+The plugin launches a local MCP server that agents use to open the vault. The server fetches ciphertext from the BotRelay API and decrypts it on the local machine. The vault key is never transmitted, and decryption is always done locally.
+
+Grok and Cursor both use the same Marketplace `mcp.json`. That file starts the server with `bash -lc`, which execs `python -m botrelay_mcp` from the documented customer install (`$HOME/.venvs/botrelay`). If `BOTRELAY_PYTHON` names an interpreter that can `import botrelay_mcp`, that interpreter is used. Otherwise the command tries `$HOME/.venvs/botrelay/bin/python3`, then `…/bin/python`, then `…/Scripts/python.exe`.
 
 `mcp.json` does not use `${CURSOR_PLUGIN_ROOT}`, `${PLUGIN_ROOT}`, or a plugin-cache path. Grok does not expand `${CURSOR_PLUGIN_ROOT}` (Cursor does), so the home-venv command does not need either host to expand a plugin root.
 
 `mcp.json` does not source `agent.env`. The installed `botrelay_mcp` package must load `~/.config/botrelay/agent.env` (mode `0600`) on startup and must not print API or vault keys. That file holds `BOTRELAY_API_URL`, `BOTRELAY_API_KEY`, and `BOTRELAY_VAULT_KEY`.
 
 `scripts/launch.sh` stays in this repo for local and developer launches. It is not the Marketplace entrypoint. It still loads `~/.config/botrelay/agent.env` and, when `BOTRELAY_HOME` is set, `$BOTRELAY_HOME/agent.env`, then resolves `BOTRELAY_PYTHON`, `botrelay-mcp` on `PATH`, the home venv, a checkout virtualenv, and `python3`.
-
-The server fetches ciphertext from the BotRelay API and decrypts it on the local machine. The vault key is never transmitted, and decryption is always done locally.
 
 ## Grok Bot
 
