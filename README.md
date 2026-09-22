@@ -26,7 +26,7 @@ Install `botrelay-mcp` before you add or enable the plugin. Cursor starts the MC
 
    On Windows, activate that venv with `Scripts\activate` (Command Prompt) or `Scripts\Activate.ps1` (PowerShell). `pip` installs `botrelay-mcp.exe` in the venv `Scripts` directory.
 
-2. In Cursor settings click **Open Customize**, then **Browse Marketplace**. Find **BotRelay**, select **Install**, and choose a user or project scope.
+2. In Cursor **Settings**, click **Open Customize**, then **Browse Marketplace**. Find **BotRelay**, select **Install**, and choose a user or project scope.
 
    Until BotRelay appears in the Marketplace, use **Add Marketplace**, choose **Import from GitHub** and paste `https://github.com/botrelay-ai/botrelay-plugin`.
 
@@ -43,7 +43,7 @@ Install `botrelay-mcp` before you add or enable the plugin. Cursor starts the MC
 
 ## How it works
 
-The plugin launches a local MCP server that agents use to open the vault. The server fetches ciphertext from the BotRelay API and decrypts it on the local machine. The vault key is never transmitted, and decryption is always done locally.  
+The plugin launches a local MCP server that agents use to open the vault. The server fetches ciphertext from the BotRelay API and decrypts it on the local machine. The vault key is never transmitted, and decryption is always done locally.
 
 ## License
 
