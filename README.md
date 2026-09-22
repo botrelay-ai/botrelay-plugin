@@ -1,20 +1,20 @@
-# BotRelay Cursor plugin
+# BotRelay Cursor Plugin
 
-BotRelay is a password manager built for AI agents. Give agents their own password vault, only the secrets they need, and the tools for secure access. Ciphertext comes from the API; decryption stays on your machine.
+BotRelay is a password manager built for AI agents. Give agents their own password vault, only the secrets they need, and the tools for secure access.
 
 Before using this plugin, visit [botrelay.ai](https://botrelay.ai) to create an account and set up a password vault.
 
-This repository is the **public Cursor plugin** only. It does not declare Marketplace Configure variables. Credentials are stored in `~/.config/botrelay/agent.env`.
+This repository is the **public Cursor plugin** only.
 
 ## Install
 
-Cursor starts the MCP server when the plugin is enabled. Marketplace `mcp.json` runs `bash` with `${CURSOR_PLUGIN_ROOT}/scripts/launch.sh`. That script reads `~/.config/botrelay/agent.env` when `BOTRELAY_API_KEY` or `BOTRELAY_VAULT_KEY` is missing. It does not require `botrelay-mcp` on the GUI `PATH`.
+Cursor starts the MCP server when the plugin is enabled. Marketplace `mcp.json` runs `bash` with `${CURSOR_PLUGIN_ROOT}/scripts/launch.sh`, and that script in turn reads `~/.config/botrelay/agent.env` to get the API Key and Vault Key values.
 
-1. From a terminal, install the MCP server and the CLI into the venv the launcher probes:
+1. From a terminal, install the MCP server:
 
    ```bash
    python3 -m venv ~/.venvs/botrelay
-   ~/.venvs/botrelay/bin/pip install botrelay-mcp botrelay-cli
+   ~/.venvs/botrelay/bin/pip install botrelay-mcp
    ```
 
    On Windows, `pip` installs console scripts under the venv `Scripts` directory. The launcher also checks `~/.venvs/botrelay/Scripts/python.exe`. Activating the venv in a terminal does not change the `PATH` Cursor uses when it starts the plugin.
@@ -22,7 +22,8 @@ Cursor starts the MCP server when the plugin is enabled. Marketplace `mcp.json` 
 2. Write this agent's credentials locally. The CLI prompts in the terminal. Do not paste the API key or vault key into chat:
 
    ```bash
-   ~/.venvs/botrelay/bin/botrelay agent configure
+   source ~/.venvs/botrelay/bin/activate
+   botrelay agent configure
    ```
 
    `botrelay agent configure` creates `~/.config/botrelay/agent.env` with mode `0600` and `KEY=VALUE` lines for:
