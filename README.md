@@ -8,7 +8,7 @@ This repository is the **public Cursor plugin** only.
 
 ## Install
 
-Install [`botrelay-mcp`](https://pypi.org/project/botrelay-mcp/) (Python 3.11 or newer) before you enable the plugin. Cursor starts the MCP server as soon as the plugin is enabled. The marketplace launcher is a `bash -c` resolver: it does not require `botrelay-mcp` on the GUI `PATH`.
+Install [`botrelay-mcp`](https://pypi.org/project/botrelay-mcp/) (Python 3.11 or newer) before you enable the plugin. Cursor starts the MCP server as soon as the plugin is enabled. Marketplace `mcp.json` runs `bash` with `${CURSOR_PLUGIN_ROOT}/scripts/launch.sh`. That script does not require `botrelay-mcp` on the GUI `PATH`.
 
 1. From a terminal, install into the venv the launcher probes even when Shared MCP injects no `BOTRELAY_PYTHON` and no `PATH` entry:
 
@@ -36,9 +36,9 @@ Install [`botrelay-mcp`](https://pypi.org/project/botrelay-mcp/) (Python 3.11 or
 
 ## How it works
 
-The plugin launches a local MCP server that agents use to open the vault. Marketplace starts that server with `bash -c`. The resolver uses `BOTRELAY_PYTHON` when that value is a real interpreter, then `~/.venvs/botrelay`, then the `botrelay-mcp` console script on `PATH`, then `python3 -m botrelay_mcp`. It does not use a plugin or workspace path. The server fetches ciphertext from the BotRelay API and decrypts it on the local machine. The vault key is never transmitted, and decryption is always done locally.
+The plugin launches a local MCP server that agents use to open the vault. Marketplace `mcp.json` starts that server with `bash` and `${CURSOR_PLUGIN_ROOT}/scripts/launch.sh`. `scripts/launch.sh` uses `BOTRELAY_PYTHON` when Configure supplies a real interpreter. If that value is missing, it still looks for `botrelay-mcp` on `PATH`, then `~/.venvs/botrelay/bin/python3` (then `python` and `Scripts/python.exe`), then a checkout virtualenv, then `python3 -m botrelay_mcp`. The server fetches ciphertext from the BotRelay API and decrypts it on the local machine. The vault key is never transmitted, and decryption is always done locally.
 
-`scripts/launch.sh` stays in this repository for local development. It honors `BOTRELAY_PYTHON`, a `botrelay-mcp` console script on `PATH`, the `~/.venvs/botrelay` install, and a checkout virtualenv. It does not print API or vault keys. Published `mcp.json` does not invoke it.
+The script derives its directory from its own path and does not print API or vault keys.
 
 ## Troubleshooting
 
@@ -46,11 +46,16 @@ The plugin launches a local MCP server that agents use to open the vault. Market
 
 Cursor opens two connections for this plugin. The profile-scoped server receives Configure, including `BOTRELAY_PYTHON`, and connects. Shared MCP then spawns `botrelay` again. That spawn's working directory is the open workspace, its GUI `PATH` often has no `botrelay-mcp`, and it may omit `BOTRELAY_PYTHON` or pass the unsubstituted placeholder. A launcher that ended in `exec botrelay-mcp` hit `bash: exec: botrelay-mcp: not found` and the status went red.
 
-The marketplace command does not depend on process env alone. `BOTRELAY_PYTHON` is also its own `mcp.json` argument, so Cursor can expand the Configure value in `command`/`args` when it does not inject the variable. If both are empty, the launcher still runs `~/.venvs/botrelay/bin/python3` (then `python`, then `Scripts/python.exe`) when that file can `import botrelay_mcp`.
+`mcp.json` points at the plugin script with Cursor's documented root variable:
 
-`${CURSOR_PLUGIN_ROOT}` and a relative `scripts/launch.sh` are not used. Some hosts leave the variable unexpanded, and Shared MCP's current directory is the workspace, so a plugin-relative path does not resolve.
+```json
+"command": "bash",
+"args": ["${CURSOR_PLUGIN_ROOT}/scripts/launch.sh"]
+```
 
-stderr from a failed launch names the install steps and does not include the API key or vault key.
+Do not use a workspace-relative `./scripts/launch.sh`. Shared MCP's current directory is the workspace, so that path fails with `ENOENT`. Do not use `${PLUGIN_ROOT}`. Cursor does not expand that Agent Plugins variable in `mcp.json`; the name that expands is `${CURSOR_PLUGIN_ROOT}`.
+
+If Shared MCP does not inject `BOTRELAY_PYTHON`, `scripts/launch.sh` still runs `$HOME/.venvs/botrelay/bin/python3` when that file can `import botrelay_mcp` (then `…/bin/python` and `…/Scripts/python.exe`). stderr from a failed launch names the install steps and does not include the API key or vault key.
 
 ## License
 

@@ -49,7 +49,7 @@
       "BOTRELAY_PYTHON": {
         "type": "string",
         "title": "Optional BotRelay Python Path",
-        "description": "Optional. Path to the venv python that has botrelay-mcp installed (for example ~/.venvs/botrelay/bin/python3). Marketplace launch uses this path when it is set. If it is empty, or Shared MCP does not inject it, launch still tries ~/.venvs/botrelay, then botrelay-mcp on PATH, then python3 -m botrelay_mcp."
+        "description": "Optional. Path to the venv python that has botrelay-mcp installed (for example ~/.venvs/botrelay/bin/python3). Marketplace launch runs scripts/launch.sh and uses this path when it is set. If it is empty, or Shared MCP does not inject it, launch.sh tries botrelay-mcp on PATH, then ~/.venvs/botrelay/bin/python3, then python3 -m botrelay_mcp."
       }
     },
     "required": [
