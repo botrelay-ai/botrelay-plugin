@@ -33,7 +33,8 @@ add this plugin through the Cursor Agents window.
    - `BOTRELAY_VAULT_KEY` — base64 vault key
    - `BOTRELAY_PYTHON` — optional; use if you installed the botrelay package using a venv
 
-6. Reload Cursor, then ask the agent to call `get_vault` or `list_secrets`.
+6. **Refresh the plugin**. Within the BotRelay plugin, under MCPs, botrelay should have a green status with the message "3 tools enabled". If this is not the case, click on botrelay under MCPs to reveal the configuration window. Turn the plugin on and off or click Reload to cause the new configuration to take effect.
+7. Test by asking a GrokBot or Cursor agent to use botrelay to call `get_vault` or `list_secrets`.
 
 ## How it works
 
