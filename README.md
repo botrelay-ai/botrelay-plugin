@@ -1,13 +1,17 @@
 # BotRelay Cursor plugin
 
-Zero-knowledge vault access for AI agents in [Cursor](https://cursor.com).
+BotRelay is a password manager built for AI agents. Give agents their own vault, only the secrets they need, and the tools for secure access.
 
-This repository is the **public Cursor plugin** only. The BotRelay service and Python packages are separate.
+This repository is the **public Cursor / GrokBot plugin** only.
+
+Before using this plugin, visit [botrelay.ai](https://botrelay.ai) to create an account, setup the password vault, and obtain an API Key and Vault Key.
 
 ## Install (customers)
+Whether you wish to create a password vault for Cursor Agents or GrokBot Agents, either way, you'll need to first install [Cursor](https://cursor.com/) locally and
+add this plugin through the Cursor Agents window.
 
-1. **Install this plugin** in Cursor: Plugins → Add Marketplace → Import from GitHub → `https://github.com/chouseknecht/botrelay-plugin` (or copy this folder to `~/.cursor/plugins/local/botrelay`).
-2. **Install the MCP package** (one-time on the machine):
+1. **Make the plugin available** in Cursor: Settings → Open Customize → Browse Marketplace → Add Marketplace → Import from GitHub → `https://github.com/botrelay-ai/botrelay-plugin`.
+2. **Install the botrelay package** (one-time on the machine):
 
    ```bash
    pip install botrelay-mcp
@@ -21,13 +25,15 @@ This repository is the **public Cursor plugin** only. The BotRelay service and P
    pip install botrelay-mcp
    ```
 
-3. **Configure** the plugin (Plugins → Configure):
+3. **Add the plugin** to Cursor: Settings → Open Customize → Browse Marketplace → Filter by Personal → click the Add button to the right of BotRelay.
+4. **Open the plugin** by clicking on the BotRelay plugin name from within the Cursor Marketplace. This will allow you to access the configuration settings.
+5. **Configure** the plugin: from within the Cursor Marketplace with the BotRelay plugin opened, click the Configure button, and set the following values:
    - `BOTRELAY_API_URL` — default `https://api.botrelay.ai`
    - `BOTRELAY_API_KEY` — agent token (`brt_live_…`)
-   - `BOTRELAY_VAULT_KEY` — base64 vault key (never sent to the API)
-   - `BOTRELAY_PYTHON` — optional; only if you need a specific Python interpreter
+   - `BOTRELAY_VAULT_KEY` — base64 vault key
+   - `BOTRELAY_PYTHON` — optional; use if you installed the botrelay package using a venv
 
-4. Reload Cursor, then ask the agent to call `get_vault` or `list_secrets`.
+6. Reload Cursor, then ask the agent to call `get_vault` or `list_secrets`.
 
 ## How it works
 
