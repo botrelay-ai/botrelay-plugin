@@ -242,7 +242,7 @@ def test_mcp_json_missing_python_names_install_without_secrets(tmp_path: Path) -
 
 def test_readme_documents_agent_env_and_launch() -> None:
     readme = (PLUGIN / "README.md").read_text()
-    assert "pip install botrelay-mcp botrelay-cli" in readme
+    assert "pip install -U botrelay-mcp botrelay-cli" in readme
     assert "botrelay agent configure" in readme
     assert ".config/botrelay/agent.env" in readme
     assert "0600" in readme
@@ -281,6 +281,67 @@ def test_readme_documents_agent_env_and_launch() -> None:
     assert "botrelay-mcp: not found" in readme
     assert "same `mcp.json`" in trouble
     assert "same Marketplace `mcp.json`" in how
+    assert "agent token" not in readme.lower()
+    assert "API key (`brt_live_…`)" in readme
+    grok = readme.split("## Grok Bot", 1)[1].split("## ", 1)[0]
+    assert "shared virtual machine" in grok
+    assert "own desktop and browser" in grok
+    assert "~/.venvs/botrelay" in grok
+    assert "~/.config/botrelay/agent.env" in grok
+    assert "import botrelay_mcp" in grok
+    assert "pip install -U botrelay-mcp botrelay-cli" in grok
+    assert "0600" in grok
+    assert "do not paste the api key or vault key into chat" in grok.lower()
+    assert "hand the desktop to the user" in grok.lower()
+    assert "host secure secret inputs" in grok.lower()
+    assert "--api-url" in grok and "--api-key" in grok and "--vault-key" in grok
+    assert "https://api.botrelay.ai" in grok
+    assert "do not use browser form-fill tools to write `agent.env`" in grok.lower()
+    assert "every agent on that Grok account" in grok
+    assert "do not each install or configure" in grok
+    assert "skip" in grok.lower() and "get_vault" in grok
+    assert "separate machine" in grok
+    assert "second local `agent.env`" in grok
+    assert "does not create `agent.env` on the Grok VM" in grok
+    assert "does not create `agent.env` on the Mac" in grok
+    assert "new device" in grok
+    assert "[Grok Bot](#grok-bot)" in readme.split("## Grok Bot", 1)[0]
+    assert "Works in Cursor, fails in a Grok agent" in trouble
+    assert "[Grok Bot](#grok-bot)" in trouble
+
+
+def test_skill_and_login_teach_grok_vm_onetime_setup() -> None:
+    skill = (PLUGIN / "skills" / "botrelay-secrets" / "SKILL.md").read_text()
+    command = (PLUGIN / "commands" / "botrelay-login.md").read_text()
+    rule = (PLUGIN / "rules" / "botrelay-secrets.mdc").read_text()
+    for path, text in (
+        ("skill", skill),
+        ("command", command),
+    ):
+        lowered = text.lower()
+        assert "agent token" not in lowered, path
+        assert "import botrelay_mcp" in text, path
+        assert ".config/botrelay/agent.env" in text, path
+        assert "pip install -U botrelay-mcp botrelay-cli" in text, path
+        assert "https://api.botrelay.ai" in text, path
+        assert "API key (`brt_live_…`)" in text, path
+        assert "Vault key" in text or "vault key" in text, path
+        assert "--api-url" in text and "--api-key" in text and "--vault-key" in text, path
+        assert "hand the desktop to the user" in lowered, path
+        assert "host secure secret inputs" in lowered, path
+        assert "do not use browser form-fill tools to write `agent.env`" in lowered, path
+        assert "get_vault" in text, path
+        assert "shared virtual machine" in lowered or "share one virtual machine" in lowered, path
+        assert "own desktop and browser" in lowered, path
+        assert "does not create `agent.env` on the Grok VM" in text, path
+        assert "does not create `agent.env` on the Mac" in text, path
+        assert "skip install and configure" in lowered, path
+        assert "fourth credential" in lowered, path
+    assert "agent token" not in rule.lower()
+    assert "skip install and configure" in rule.lower()
+    assert "API key (`brt_live_…`)" in rule
+    assert "does not create `agent.env` on the Grok VM" in rule
+    assert "browser form-fill tools to write `agent.env`" in rule.lower()
 
 
 def test_marketplace_points_at_plugin_root() -> None:
