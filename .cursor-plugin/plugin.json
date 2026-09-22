@@ -26,37 +26,7 @@
   "logo": "assets/botrelay-logo-marketplace.svg",
   "skills": "./skills/",
   "rules": "./rules/",
+  "commands": "./commands/",
   "mcpServers": "./mcp.json",
-  "variables": {
-    "type": "object",
-    "properties": {
-      "BOTRELAY_API_URL": {
-        "type": "string",
-        "title": "BotRelay API URL",
-        "description": "BotRelay API base URL for this install.",
-        "default": "https://api.botrelay.ai"
-      },
-      "BOTRELAY_API_KEY": {
-        "type": "string",
-        "title": "BotRelay API Key",
-        "description": "API Key for accessing the BotRelay vault."
-      },
-      "BOTRELAY_VAULT_KEY": {
-        "type": "string",
-        "title": "BotRelay Vault Key",
-        "description": "Key used to decrypts ciphertext locally."
-      },
-      "BOTRELAY_PYTHON": {
-        "type": "string",
-        "title": "Optional BotRelay Python Path",
-        "description": "Optional. Path to the venv python that has botrelay-mcp installed (for example ~/.venvs/botrelay/bin/python3). Marketplace launch runs scripts/launch.sh and uses this path when it is set. If it is empty, or Shared MCP does not inject it, launch.sh tries botrelay-mcp on PATH, then ~/.venvs/botrelay/bin/python3, then python3 -m botrelay_mcp."
-      }
-    },
-    "required": [
-      "BOTRELAY_API_URL",
-      "BOTRELAY_API_KEY",
-      "BOTRELAY_VAULT_KEY"
-    ]
-  },
   "license": "MIT"
 }

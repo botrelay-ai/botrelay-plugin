@@ -1,6 +1,6 @@
 ---
 name: botrelay-secrets
-description: Secure password vault for AI agents. Empower agents to do more while keeping your secrets safe.
+description: Secure password vault for AI agents. Use when logging into BotRelay, loading vault information, or calling get_vault, list_secrets, or get_secret. Never paste API or vault keys into chat.
 ---
 
 # BotRelay secrets
@@ -8,6 +8,27 @@ description: Secure password vault for AI agents. Empower agents to do more whil
 This plugin wraps the **local** BotRelay MCP (`apps/mcp`). Ciphertext is fetched from the API and decrypted **in this process** with `BOTRELAY_VAULT_KEY`. The vault key must never be sent to `api.botrelay.ai` or any other host.
 
 The install is bound to a single vault. Access secrets from this vault only for the current task. Don't hunt credentials for other bots or workflows.
+
+Credentials for this install live in `~/.config/botrelay/agent.env` (mode 0600), written by `botrelay agent configure`. If `BOTRELAY_HOME` is set, `scripts/launch.sh` also reads `$BOTRELAY_HOME/agent.env`. The file holds `BOTRELAY_API_URL`, `BOTRELAY_API_KEY`, and `BOTRELAY_VAULT_KEY`.
+
+## Log into BotRelay and get the vault information
+
+When the user asks to log into BotRelay, get vault information, or runs `/botrelay-login`:
+
+1. Ensure `~/.venvs/botrelay` exists and has the packages:
+
+   ```bash
+   python3 -m venv ~/.venvs/botrelay
+   ~/.venvs/botrelay/bin/pip install botrelay-mcp botrelay-cli
+   ```
+
+2. Run `~/.venvs/botrelay/bin/botrelay agent configure`. The CLI prompts on the user's machine and writes `~/.config/botrelay/agent.env` (mode 0600). If it cannot prompt, ask the user to run that command in their terminal. Never ask them to paste `BOTRELAY_API_KEY` or `BOTRELAY_VAULT_KEY` into chat, and never print the contents of `agent.env`.
+
+3. If the MCP server started before `agent.env` existed, tell the user to reload the BotRelay MCP server, then continue.
+
+4. Call `get_vault`.
+
+5. Report only `id`, `name`, and `labels`.
 
 ## Tools (same contract as `apps/mcp`)
 
@@ -31,15 +52,15 @@ The install is bound to a single vault. Access secrets from this vault only for 
 - Do not paste passwords, API keys, vault keys, agent tokens (`brt_live_…`), or full `get_secret` JSON into chat, logs, commits, screenshots, or PR text.
 - Do not dump `list_secrets` plus `get_secret` for every label “just in case.”
 - Do not send `BOTRELAY_VAULT_KEY` to the BotRelay API, a hosted MCP, or another bot.
-- Do not fall back to `/home/box/botrelay/.env` or any shared credential file.
+- Do not fall back to `/home/box/botrelay/.env` or any shared credential file. This install's credentials are `~/.config/botrelay/agent.env` only.
 - Do not invent a remote decrypt endpoint. There isn’t one.
 
 ## If tools fail
 
-- Missing keys / unsubstituted `${BOTRELAY_API_KEY}`: this account’s plugin setup fields are empty. Ask the owner to configure **this bot’s** URL, agent token, and vault key. Do not copy another bot’s values.
-- 401 from the API: wrong or rotated `BOTRELAY_API_KEY` for this vault.
+- Missing keys, or `launch.sh` still has no `BOTRELAY_API_KEY` / `BOTRELAY_VAULT_KEY`: `~/.config/botrelay/agent.env` is missing or incomplete. Ask the owner to install `botrelay-mcp` and `botrelay-cli` into `~/.venvs/botrelay` and run `botrelay agent configure`. That writes `agent.env` (mode 0600). Then reload the BotRelay MCP server. Do not ask them to paste keys into chat.
+- 401 from the API: wrong or rotated `BOTRELAY_API_KEY` for this vault. Run `botrelay agent configure` again for this agent.
 - Decrypt errors: `BOTRELAY_VAULT_KEY` does not match this vault (or is not standard base64 of 32 bytes).
-- Import / launch errors: install `botrelay-mcp` on this machine
-  (`python3 -m pip install botrelay-mcp`). Developers may instead install
-  `packages/sdk-python` and `apps/mcp` in an editable checkout `.venv` and run
+- Import / launch errors: install into this machine's venv
+  (`python3 -m venv ~/.venvs/botrelay && ~/.venvs/botrelay/bin/pip install botrelay-mcp botrelay-cli`).
+  Developers may instead install `packages/sdk-python` and `apps/mcp` in an editable checkout `.venv` and run
   `install-local.sh`. The plugin does not reimplement decryption.

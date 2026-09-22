@@ -7,51 +7,44 @@ from pathlib import Path
 PLUGIN = Path(__file__).resolve().parents[1]
 CURSOR_MANIFEST = PLUGIN / ".cursor-plugin" / "plugin.json"
 MCP_JSON = PLUGIN / "mcp.json"
-REQUIRED_FIELDS = ("BOTRELAY_API_URL", "BOTRELAY_API_KEY", "BOTRELAY_VAULT_KEY")
-OPTIONAL_FIELDS = ("BOTRELAY_PYTHON",)
-SETUP_FIELDS = REQUIRED_FIELDS + OPTIONAL_FIELDS
+SECRET_PLACEHOLDERS = ("${BOTRELAY_API_URL}", "${BOTRELAY_API_KEY}", "${BOTRELAY_VAULT_KEY}")
 
 
 def _load(path: Path) -> dict:
     return json.loads(path.read_text())
 
 
-def test_cursor_manifest_declares_setup_fields() -> None:
+def test_cursor_manifest_has_no_configure_variables() -> None:
     manifest = _load(CURSOR_MANIFEST)
+    raw = CURSOR_MANIFEST.read_text()
     assert manifest["name"] == "botrelay"
+    assert manifest["displayName"] == "BotRelay"
     assert manifest["mcpServers"] == "./mcp.json"
-    variables = manifest["variables"]
-    assert variables["type"] == "object"
-    for name in SETUP_FIELDS:
-        assert name in variables["properties"]
-        assert variables["properties"][name]["type"] == "string"
-    assert set(variables["required"]) == set(REQUIRED_FIELDS)
-    assert "BOTRELAY_PYTHON" not in variables["required"]
-    assert variables["properties"]["BOTRELAY_API_URL"]["default"] == "https://api.botrelay.ai"
-    assert "api key" in variables["properties"]["BOTRELAY_API_KEY"]["title"].lower()
-    assert "vault key" in variables["properties"]["BOTRELAY_VAULT_KEY"]["title"].lower()
-    assert "python" in variables["properties"]["BOTRELAY_PYTHON"]["title"].lower()
-    py_desc = variables["properties"]["BOTRELAY_PYTHON"]["description"].lower()
-    assert "optional" in py_desc
-    assert "marketplace" in py_desc
-    assert "path" in py_desc
+    assert manifest["skills"] == "./skills/"
+    assert manifest["rules"] == "./rules/"
+    assert manifest["commands"] == "./commands/"
+    assert "variables" not in manifest
+    assert "variables" not in raw
+    for placeholder in SECRET_PLACEHOLDERS:
+        assert placeholder not in raw
     assert "author" in manifest and "name" in manifest["author"]
     extra = set(manifest["author"]) - {"name", "email"}
     assert not extra
 
 
-def test_mcp_configs_wire_env_like_apps_mcp() -> None:
+def test_mcp_configs_do_not_embed_secret_placeholders() -> None:
     cursor_mcp = _load(MCP_JSON)
     server = cursor_mcp["mcpServers"]["botrelay"]
-    assert set(server) == {"command", "args", "env"}
+    assert set(server) == {"command", "args"}
+    assert "env" not in server
     assert server["command"] == "bash"
     assert server["args"] == ["${CURSOR_PLUGIN_ROOT}/scripts/launch.sh"]
-    for name in SETUP_FIELDS:
-        assert server["env"][name] == "${" + name + "}"
-    raw = json.dumps(server)
-    allowed = set(SETUP_FIELDS) | {"CURSOR_PLUGIN_ROOT"}
-    for match in re.findall(r"\$\{([A-Z][A-Z0-9_]*)\}", raw):
-        assert match in allowed
+    raw = MCP_JSON.read_text()
+    for placeholder in SECRET_PLACEHOLDERS:
+        assert placeholder not in raw
+    assert "${BOTRELAY_PYTHON}" not in raw
+    matches = re.findall(r"\$\{([A-Z][A-Z0-9_]*)\}", raw)
+    assert matches == ["CURSOR_PLUGIN_ROOT"]
     assert "${PLUGIN_ROOT}" not in raw
     assert "GROK_PLUGIN_ROOT" not in raw
     assert "./scripts/" not in raw
@@ -76,13 +69,22 @@ def test_mcp_command_uses_cursor_plugin_root_launch_script() -> None:
     assert "-c" not in server["args"]
 
 
-def test_readme_documents_bash_launch_and_botrelay_python() -> None:
+def test_readme_documents_agent_env_and_launch() -> None:
     readme = (PLUGIN / "README.md").read_text()
-    assert "pip install botrelay-mcp" in readme
+    assert "pip install botrelay-mcp botrelay-cli" in readme
+    assert "botrelay agent configure" in readme
+    assert ".config/botrelay/agent.env" in readme
+    assert "0600" in readme
+    assert "Try in Chat" in readme
+    assert "/botrelay-login" in readme
+    assert "Log into BotRelay and get the vault information." in readme
+    assert "**Configure**" not in readme
+    assert "Plugins → Configure" not in readme
     how = readme.split("## How it works", 1)[1].split("## ", 1)[0]
     assert "bash" in how.lower()
     assert "`botrelay-mcp`" in how
     assert "BOTRELAY_PYTHON" in how
+    assert "agent.env" in how
     assert "${CURSOR_PLUGIN_ROOT}/scripts/launch.sh" in how
     assert "./scripts/launch.sh" not in how
     trouble = readme.split("## Troubleshooting", 1)[1]
@@ -90,16 +92,12 @@ def test_readme_documents_bash_launch_and_botrelay_python() -> None:
     assert "${PLUGIN_ROOT}" in trouble
     assert "${CURSOR_PLUGIN_ROOT}" in trouble
     assert ".venvs/botrelay/bin/python3" in trouble
+    assert "botrelay agent configure" in trouble
     assert "BOTRELAY_PYTHON" in readme
     assert "PATH" in readme
     assert "Shared MCP" in readme
     assert ".venvs/botrelay" in readme
     assert "botrelay-mcp: not found" in readme
-    # Configure copy: optional python path, PATH is only a fallback.
-    configure = readme.split("**Configure**", 1)[1].split("4.", 1)[0]
-    assert "BOTRELAY_PYTHON" in configure
-    assert "PATH" in configure
-    assert ".venvs/botrelay" in configure
 
 
 def test_marketplace_points_at_plugin_root() -> None:
@@ -117,9 +115,24 @@ def test_skill_and_rule_frontmatter() -> None:
     assert "get_secret" in skill
     assert "never paste" in skill.lower() or "do not paste" in skill.lower()
     assert "chat" in skill.lower()
+    assert "botrelay agent configure" in skill
+    assert ".config/botrelay/agent.env" in skill
+    assert "get_vault" in skill
+    assert "Plugins → Configure" not in skill
     rule = (PLUGIN / "rules" / "botrelay-secrets.mdc").read_text()
     assert "alwaysApply: true" in rule
     assert "BOTRELAY_VAULT_KEY" in rule
+    assert "agent.env" in rule
+    assert "botrelay agent configure" in rule
+    command = (PLUGIN / "commands" / "botrelay-login.md").read_text()
+    assert command.startswith("---\n")
+    assert "name: botrelay-login" in command
+    assert "Log into BotRelay and get the vault information." in command
+    assert "botrelay agent configure" in command
+    assert "botrelay-mcp botrelay-cli" in command
+    assert "get_vault" in command
+    assert ".config/botrelay/agent.env" in command
+    assert "0600" in command
 
 
 def test_plugin_docs_and_defs_omit_stage_host() -> None:
