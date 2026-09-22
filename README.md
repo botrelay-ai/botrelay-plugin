@@ -8,7 +8,7 @@ This repository is the **public Cursor plugin** only.
 
 ## Install
 
-Cursor starts the MCP server when the plugin is enabled. Marketplace `mcp.json` runs `bash` with `${CURSOR_PLUGIN_ROOT}/scripts/launch.sh`, which in turn reads `~/.config/botrelay/agent.env` to get the API Key and Vault Key values.
+When this plugin is enabled Cursor starts an MCP server which expects to read `~/.config/botrelay/agent.env` to get the API Key and Vault Key values. So before enabling the plugin within the Cursor Marketplace, you must first install the `botrelay-mcp` server package and run the configure step to input the credential keys. The following will walk you through it:
 
 1. From a terminal, install the MCP server:
 
@@ -19,11 +19,10 @@ Cursor starts the MCP server when the plugin is enabled. Marketplace `mcp.json` 
 
    On Windows, `pip` installs console scripts under the venv `Scripts` directory. The launcher also checks `~/.venvs/botrelay/Scripts/python.exe`. Activating the venv in a terminal does not change the `PATH` Cursor uses when it starts the plugin.
 
-2. Write this agent's credentials locally. The CLI prompts in the terminal. Do not paste the API key or vault key into chat:
+2. Store the access credentials locally. The CLI prompts in the terminal. Do NOT paste the API key or vault key into chat:
 
    ```bash
-   source ~/.venvs/botrelay/bin/activate
-   botrelay agent configure
+   ~/.venvs/botrelay/bin/botrelay agent configure
    ```
 
    `botrelay agent configure` creates `~/.config/botrelay/agent.env` with mode `0600` and `KEY=VALUE` lines for:
@@ -38,7 +37,7 @@ Cursor starts the MCP server when the plugin is enabled. Marketplace `mcp.json` 
 
    Until BotRelay appears in the Marketplace, use **Add Marketplace**, choose **Import from GitHub** and paste `https://github.com/botrelay-ai/botrelay-plugin`.
 
-4. Under MCPs, botrelay should have a green status with the message `3 tools enabled`. If you ran `botrelay agent configure` after enabling the plugin, turn the plugin off and on or click Reload so `launch.sh` reads `agent.env`.
+4. Under MCPs, botrelay should have a green status with the message `3 tools enabled`. If you ran `botrelay agent configure` after enabling the plugin, turn the plugin off and on or click Reload so `launch.sh` reads `agent.env`. If the status stays Not connected, or tools fail with Not connected, fully quit Cursor and reopen it. Reload Window is not enough.
 
 5. In chat, use **Try in Chat** or the `/botrelay-login` command. The prompt is: “Log into BotRelay and get the vault information.” The agent installs the CLI into `~/.venvs/botrelay` if needed, runs `botrelay agent configure`, reloads MCP if needed, calls `get_vault`, and reports only the vault id, name, and labels.
 
@@ -51,6 +50,12 @@ The plugin launches a local MCP server that agents use to open the vault. Market
 The script derives its directory from its own path.
 
 ## Troubleshooting
+
+### Not connected after Reload
+
+After you install or reinstall the Marketplace plugin, or after writing or updating `~/.config/botrelay/agent.env`, turn botrelay off and on under MCPs or click Reload. If the status stays Not connected, or agent tools fail with Not connected, fully quit Cursor and reopen it. Reload MCP and Reload Window do not reattach the agent client to the live MCP process.
+
+A reinstall can leave `CURSOR_PLUGIN_ROOT` pointed at a stale plugin cache path until that full restart.
 
 ### Status flashes green, then turns red (`botrelay-mcp: not found`)
 
