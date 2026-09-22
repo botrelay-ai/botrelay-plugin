@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
-# Launch BotRelay's local stdio MCP server.
-# Credentials come from the environment or from agent.env written by
-# `botrelay agent configure`. Prefer BOTRELAY_PYTHON, then a PATH console
-# script, then ~/.venvs/botrelay, then a checkout venv, then python3/python.
-# Never echo API or vault keys.
+# Local and developer launcher for BotRelay's stdio MCP server.
+# Marketplace mcp.json does not call this script. Cursor and Grok both exec
+# ~/.venvs/botrelay (or BOTRELAY_PYTHON) with `python -m botrelay_mcp`.
+# The botrelay_mcp package must load ~/.config/botrelay/agent.env on startup.
+# This script still loads agent.env itself for local/dev runs.
+# Prefer BOTRELAY_PYTHON, then a PATH console script, then ~/.venvs/botrelay,
+# then a checkout venv, then python3/python. Never echo API or vault keys.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

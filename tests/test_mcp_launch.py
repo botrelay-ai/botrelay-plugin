@@ -1,7 +1,8 @@
-"""launch.sh resolution when Shared MCP omits BOTRELAY_PYTHON.
+"""launch.sh resolution for local and developer launches.
 
-Marketplace mcp.json execs this script via ${CURSOR_PLUGIN_ROOT}. Shared MCP's
-cwd is the workspace, and that spawn may not receive Configure env.
+Marketplace mcp.json does not call this script. It execs the home venv with
+`python -m botrelay_mcp`. Shared MCP's cwd is the workspace, and a local
+launch may not receive Configure env, so this script still loads agent.env.
 """
 
 from __future__ import annotations

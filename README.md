@@ -8,16 +8,16 @@ This repository is the **public Cursor plugin** only.
 
 ## Install
 
-When this plugin is enabled Cursor starts an MCP server which expects to read `~/.config/botrelay/agent.env` to get the API Key and Vault Key values. So before enabling the plugin within the Cursor Marketplace, you must first install the `botrelay-mcp` server package and run the configure step to input the credential keys. The following will walk you through it:
+When this plugin is enabled, Cursor and Grok start the same MCP server. `botrelay_mcp` reads `~/.config/botrelay/agent.env` for the API key and vault key. Before enabling the plugin, install the `botrelay-mcp` package and run the configure step. The following walks through it:
 
-1. From a terminal, install the MCP server:
+1. From a terminal, install the MCP server and CLI:
 
    ```bash
    python3 -m venv ~/.venvs/botrelay
-   ~/.venvs/botrelay/bin/pip install botrelay-mcp
+   ~/.venvs/botrelay/bin/pip install botrelay-mcp botrelay-cli
    ```
 
-   On Windows, `pip` installs console scripts under the venv `Scripts` directory. The launcher also checks `~/.venvs/botrelay/Scripts/python.exe`. Activating the venv in a terminal does not change the `PATH` Cursor uses when it starts the plugin.
+   On Windows, `pip` installs console scripts under the venv `Scripts` directory. The Marketplace entrypoint also checks `~/.venvs/botrelay/Scripts/python.exe`. Activating the venv in a terminal does not change the `PATH` Cursor or Grok uses when it starts the plugin.
 
 2. Store the access credentials locally. The CLI prompts in the terminal. Do NOT paste the API key or vault key into chat:
 
@@ -31,23 +31,27 @@ When this plugin is enabled Cursor starts an MCP server which expects to read `~
    - `BOTRELAY_API_KEY` — agent token (`brt_live_…`)
    - `BOTRELAY_VAULT_KEY` — base64 vault key
 
-   If `BOTRELAY_HOME` is set, the launcher also reads `$BOTRELAY_HOME/agent.env`. Values already set in the environment are left as they are.
+   The `botrelay_mcp` package must load this file when the server starts. Marketplace `mcp.json` does not source it. Values already set in the environment are left as they are. `scripts/launch.sh` (local/dev only, not the Marketplace entrypoint) also reads `$BOTRELAY_HOME/agent.env` when `BOTRELAY_HOME` is set.
 
 3. In Cursor **Settings**, click **Open Customize**, then **Browse Marketplace**. Find **BotRelay**, select **Install**, and choose a user or project scope.
 
    Until BotRelay appears in the Marketplace, use **Add Marketplace**, choose **Import from GitHub** and paste `https://github.com/botrelay-ai/botrelay-plugin`.
 
-4. Under MCPs, botrelay should have a green status with the message `3 tools enabled`. If you ran `botrelay agent configure` after enabling the plugin, turn the plugin off and on or click Reload so `launch.sh` reads `agent.env`. If the status stays Not connected, or tools fail with Not connected, fully quit Cursor and reopen it. Reload Window is not enough.
+4. Under MCPs, botrelay should have a green status with the message `3 tools enabled`. If you ran `botrelay agent configure` after enabling the plugin, turn the plugin off and on or click Reload so `botrelay_mcp` loads `agent.env`. If the status stays Not connected, or tools fail with Not connected, fully quit Cursor and reopen it. Reload Window is not enough.
 
 5. In chat, use **Try in Chat** or the `/botrelay-login` command. The prompt is: “Log into BotRelay and get the vault information.” The agent installs the CLI into `~/.venvs/botrelay` if needed, runs `botrelay agent configure`, reloads MCP if needed, calls `get_vault`, and reports only the vault id, name, and labels.
 
 ## How it works
 
-The plugin launches a local MCP server that agents use to open the vault. Marketplace `mcp.json` starts that server with `bash` and `${CURSOR_PLUGIN_ROOT}/scripts/launch.sh`. If `BOTRELAY_API_KEY` or `BOTRELAY_VAULT_KEY` is missing or still an unsubstituted `${...}` placeholder, `scripts/launch.sh` loads `~/.config/botrelay/agent.env` (and `$BOTRELAY_HOME/agent.env` when `BOTRELAY_HOME` is set). It parses `KEY=VALUE` lines itself and does not print API or vault keys.
+The plugin launches a local MCP server that agents use to open the vault. Grok and Cursor both use the same Marketplace `mcp.json`. That file starts the server with `bash -lc`, which execs `python -m botrelay_mcp` from the documented customer install (`$HOME/.venvs/botrelay`). If `BOTRELAY_PYTHON` names an interpreter that can `import botrelay_mcp`, that interpreter is used. Otherwise the command tries `$HOME/.venvs/botrelay/bin/python3`, then `…/bin/python`, then `…/Scripts/python.exe`.
 
-`scripts/launch.sh` uses `BOTRELAY_PYTHON` when that environment variable, or `agent.env`, names a real interpreter. If that value is missing, it still looks for `botrelay-mcp` on `PATH`, then `~/.venvs/botrelay/bin/python3` (then `python` and `Scripts/python.exe`), then a checkout virtualenv, then `python3 -m botrelay_mcp`. The server fetches ciphertext from the BotRelay API and decrypts it on the local machine. The vault key is never transmitted, and decryption is always done locally.
+`mcp.json` does not use `${CURSOR_PLUGIN_ROOT}`, `${PLUGIN_ROOT}`, or a plugin-cache path. Grok does not expand `${CURSOR_PLUGIN_ROOT}` (Cursor does), so the home-venv command does not need either host to expand a plugin root.
 
-The script derives its directory from its own path.
+`mcp.json` does not source `agent.env`. The installed `botrelay_mcp` package must load `~/.config/botrelay/agent.env` (mode `0600`) on startup and must not print API or vault keys. That file holds `BOTRELAY_API_URL`, `BOTRELAY_API_KEY`, and `BOTRELAY_VAULT_KEY`.
+
+`scripts/launch.sh` stays in this repo for local and developer launches. It is not the Marketplace entrypoint. It still loads `~/.config/botrelay/agent.env` and, when `BOTRELAY_HOME` is set, `$BOTRELAY_HOME/agent.env`, then resolves `BOTRELAY_PYTHON`, `botrelay-mcp` on `PATH`, the home venv, a checkout virtualenv, and `python3`.
+
+The server fetches ciphertext from the BotRelay API and decrypts it on the local machine. The vault key is never transmitted, and decryption is always done locally.
 
 ## Troubleshooting
 
@@ -55,26 +59,19 @@ The script derives its directory from its own path.
 
 After you install or reinstall the Marketplace plugin, or after writing or updating `~/.config/botrelay/agent.env`, turn botrelay off and on under MCPs or click Reload. If the status stays Not connected, or agent tools fail with Not connected, fully quit Cursor and reopen it. Reload MCP and Reload Window do not reattach the agent client to the live MCP process.
 
-A reinstall can leave `CURSOR_PLUGIN_ROOT` pointed at a stale plugin cache path until that full restart.
-
 ### Status flashes green, then turns red (`botrelay-mcp: not found`)
 
-Cursor opens two connections for this plugin. Shared MCP's working directory is the open workspace, and its GUI `PATH` often has no `botrelay-mcp`. `mcp.json` does not pass secret placeholders. Credentials come from the environment or from `agent.env`.
+Cursor opens two connections for this plugin. Shared MCP's working directory is the open workspace, and its GUI `PATH` often has no `botrelay-mcp`. `mcp.json` does not pass secret placeholders and does not depend on that `PATH`. Credentials are loaded by `botrelay_mcp` from `agent.env`.
 
-`mcp.json` points at the plugin script with Cursor's documented root variable:
+Grok and Cursor use the same `mcp.json` home-venv entrypoint. `bash -lc` execs `$HOME/.venvs/botrelay/bin/python3 -m botrelay_mcp` when that interpreter can `import botrelay_mcp` (then `…/bin/python` and `…/Scripts/python.exe`). If `BOTRELAY_PYTHON` names an interpreter that can import the package, that interpreter is used instead.
 
-```json
-"command": "bash",
-"args": ["${CURSOR_PLUGIN_ROOT}/scripts/launch.sh"]
-```
+Do not point Marketplace `mcp.json` at a workspace-relative `./scripts/launch.sh`. Shared MCP's current directory is the workspace, so that path fails with `ENOENT`. Do not use `${PLUGIN_ROOT}` or `${CURSOR_PLUGIN_ROOT}`. Grok leaves `${CURSOR_PLUGIN_ROOT}` unsubstituted, so a plugin-cache path never starts the server there.
 
-Do not use a workspace-relative `./scripts/launch.sh`. Shared MCP's current directory is the workspace, so that path fails with `ENOENT`. Do not use `${PLUGIN_ROOT}`. Cursor does not expand that Agent Plugins variable in `mcp.json`; the name that expands is `${CURSOR_PLUGIN_ROOT}`.
-
-If `BOTRELAY_PYTHON` is unset, `scripts/launch.sh` still runs `$HOME/.venvs/botrelay/bin/python3` when that file can `import botrelay_mcp` (then `…/bin/python` and `…/Scripts/python.exe`). stderr from a failed launch names `botrelay agent configure` and the `~/.venvs/botrelay` install steps, and does not include the API key or vault key.
+stderr from a failed launch names the `~/.venvs/botrelay` install and `BOTRELAY_PYTHON`. It does not include the API key or vault key.
 
 ### MCP exits before tools are listed
 
-`BOTRELAY_API_KEY` and `BOTRELAY_VAULT_KEY` are still missing after `launch.sh` reads `~/.config/botrelay/agent.env`. Run `~/.venvs/botrelay/bin/botrelay agent configure`, then reload the BotRelay MCP server. This plugin has no Configure variables.
+`BOTRELAY_API_KEY` and `BOTRELAY_VAULT_KEY` are still missing after `botrelay_mcp` loads `~/.config/botrelay/agent.env`. The MCP package must load that file on startup; this plugin's `mcp.json` does not source it. Run `~/.venvs/botrelay/bin/botrelay agent configure`, then reload the BotRelay MCP server. This plugin has no Configure variables.
 
 ## License
 
