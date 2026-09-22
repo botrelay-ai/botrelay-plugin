@@ -14,8 +14,7 @@ When this plugin is enabled Cursor starts an MCP server which expects to read `~
 
    ```bash
    python3 -m venv ~/.venvs/botrelay
-   source ~/.venvs/botrelay/bin/activate
-   pip install botrelay-mcp
+   ~/.venvs/botrelay/bin/pip install botrelay-mcp
    ```
 
    On Windows, `pip` installs console scripts under the venv `Scripts` directory. The launcher also checks `~/.venvs/botrelay/Scripts/python.exe`. Activating the venv in a terminal does not change the `PATH` Cursor uses when it starts the plugin.
@@ -23,7 +22,7 @@ When this plugin is enabled Cursor starts an MCP server which expects to read `~
 2. Store the access credentials locally. The CLI prompts in the terminal. Do NOT paste the API key or vault key into chat:
 
    ```bash
-   botrelay agent configure
+   ~/.venvs/botrelay/bin/botrelay agent configure
    ```
 
    `botrelay agent configure` creates `~/.config/botrelay/agent.env` with mode `0600` and `KEY=VALUE` lines for:
