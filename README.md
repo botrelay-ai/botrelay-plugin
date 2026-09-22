@@ -6,12 +6,11 @@ This repository is the **public Cursor / GrokBot plugin** only.
 
 Before using this plugin, visit [botrelay.ai](https://botrelay.ai) to create an account, setup the password vault, and obtain an API Key and Vault Key.
 
-## Install (customers)
-Whether you wish to create a password vault for Cursor Agents or GrokBot Agents, either way, you'll need to first install [Cursor](https://cursor.com/) locally and
-add this plugin through the Cursor Agents window.
+## Install
+To enable Cursor and GrokBot agents to access a password vault, use the following instructions to install this plugin on your local machine:
 
-1. **Make the plugin available** in Cursor: Settings → Open Customize → Browse Marketplace → Add Marketplace → Import from GitHub → `https://github.com/botrelay-ai/botrelay-plugin`.
-2. **Install the botrelay package** (one-time on the machine):
+1. Within Cursor, go to Settings → Open Customize → Browse Marketplace → Add Marketplace → Import from GitHub → `https://github.com/botrelay-ai/botrelay-plugin`.
+2. From a terminal window, install the botrelay-mcp Python package:
 
    ```bash
    pip install botrelay-mcp
@@ -25,15 +24,15 @@ add this plugin through the Cursor Agents window.
    pip install botrelay-mcp
    ```
 
-3. **Add the plugin** to Cursor: Settings → Open Customize → Browse Marketplace → Filter by Personal → click the Add button to the right of BotRelay.
-4. **Open the plugin** by clicking on the BotRelay plugin name from within the Cursor Marketplace. This will allow you to access the configuration settings.
-5. **Configure** the plugin: from within the Cursor Marketplace with the BotRelay plugin opened, click the Configure button, and set the following values:
+3. From within Cursor, go to Settings → Open Customize → Browse Marketplace → Filter by Personal → click the Add button to the right of BotRelay.
+4. After the botrelay plugin is added, click on the BotRelay plugin name to access configuration settings.
+5. Click the Configure button and set the following values:
    - `BOTRELAY_API_URL` — default `https://api.botrelay.ai`
    - `BOTRELAY_API_KEY` — agent token (`brt_live_…`)
    - `BOTRELAY_VAULT_KEY` — base64 vault key
    - `BOTRELAY_PYTHON` — optional; use if you installed the botrelay package using a venv
 
-6. **Refresh the plugin**. Within the BotRelay plugin, under MCPs, botrelay should have a green status with the message "3 tools enabled". If this is not the case, click on botrelay under MCPs to reveal the configuration window. Turn the plugin on and off or click Reload to cause the new configuration to take effect.
+6. Under MCPs, botrelay should have a green status with the message "3 tools enabled". If this is not the case, click on botrelay under MCPs to reveal the configuration window. Turn the plugin on and off or click Reload to cause the new configuration to take effect.
 7. Test by asking a GrokBot or Cursor agent to use botrelay to call `get_vault` or `list_secrets`.
 
 ## How it works
