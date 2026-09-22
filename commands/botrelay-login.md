@@ -24,7 +24,7 @@ Set up this agent's BotRelay credentials locally, then report the vault id, name
 
    If that command cannot prompt (no TTY), ask the user to run it in their own terminal. Do not ask them to paste the API key or vault key into chat. Do not read `agent.env` aloud or copy its values into the conversation.
 
-3. If the BotRelay MCP server was already started, tell the user to reload it so `scripts/launch.sh` picks up `agent.env`. Then continue.
+3. If the BotRelay MCP server was already started, tell the user to reload it so `botrelay_mcp` loads `agent.env`. Marketplace `mcp.json` does not source that file. Then continue.
 
 4. Call the BotRelay MCP tool `get_vault`.
 

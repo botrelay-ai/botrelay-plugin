@@ -2,7 +2,10 @@
   "mcpServers": {
     "botrelay": {
       "command": "bash",
-      "args": ["${CURSOR_PLUGIN_ROOT}/scripts/launch.sh"]
+      "args": [
+        "-lc",
+        "# Marketplace entrypoint for Cursor and Grok. This shell must not load agent.env.\n# The botrelay_mcp package must load ~/.config/botrelay/agent.env on startup.\npy=\"$BOTRELAY_PYTHON\"\ncase \"$py\" in\n  \"\"|*'${'*) py=\"\" ;;\n  \"~/\"*) py=\"$HOME/${py#\"~/\"}\" ;;\nesac\ncan_import() {\n  [ -n \"$1\" ] && [ -x \"$1\" ] && \"$1\" -c \"import botrelay_mcp\" >/dev/null 2>&1\n}\nif ! can_import \"$py\"; then\n  py=\"\"\n  for c in \\\n    \"$HOME/.venvs/botrelay/bin/python3\" \\\n    \"$HOME/.venvs/botrelay/bin/python\" \\\n    \"$HOME/.venvs/botrelay/Scripts/python.exe\"\n  do\n    if can_import \"$c\"; then\n      py=\"$c\"\n      break\n    fi\n  done\nfi\nif [ -z \"$py\" ]; then\n  echo \"botrelay-mcp is not importable.\" >&2\n  echo 'Customer install: python3 -m venv \"$HOME/.venvs/botrelay\" && \"$HOME/.venvs/botrelay/bin/pip\" install botrelay-mcp botrelay-cli' >&2\n  echo \"Or set BOTRELAY_PYTHON to that venv's python.\" >&2\n  exit 1\nfi\nexec \"$py\" -m botrelay_mcp \"$@\"\n"
+      ]
     }
   }
 }

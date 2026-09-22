@@ -9,7 +9,7 @@ This plugin wraps the **local** BotRelay MCP (`apps/mcp`). Ciphertext is fetched
 
 The install is bound to a single vault. Access secrets from this vault only for the current task. Don't hunt credentials for other bots or workflows.
 
-Credentials for this install live in `~/.config/botrelay/agent.env` (mode 0600), written by `botrelay agent configure`. If `BOTRELAY_HOME` is set, `scripts/launch.sh` also reads `$BOTRELAY_HOME/agent.env`. The file holds `BOTRELAY_API_URL`, `BOTRELAY_API_KEY`, and `BOTRELAY_VAULT_KEY`.
+Credentials for this install live in `~/.config/botrelay/agent.env` (mode 0600), written by `botrelay agent configure`. The `botrelay_mcp` package loads that file on startup. Marketplace `mcp.json` does not source it. The file holds `BOTRELAY_API_URL`, `BOTRELAY_API_KEY`, and `BOTRELAY_VAULT_KEY`. Local/dev `scripts/launch.sh` also reads `$BOTRELAY_HOME/agent.env` when `BOTRELAY_HOME` is set.
 
 ## Log into BotRelay and get the vault information
 
@@ -57,7 +57,7 @@ When the user asks to log into BotRelay, get vault information, or runs `/botrel
 
 ## If tools fail
 
-- Missing keys, or `launch.sh` still has no `BOTRELAY_API_KEY` / `BOTRELAY_VAULT_KEY`: `~/.config/botrelay/agent.env` is missing or incomplete. Ask the owner to install `botrelay-mcp` and `botrelay-cli` into `~/.venvs/botrelay` and run `botrelay agent configure`. That writes `agent.env` (mode 0600). Then reload the BotRelay MCP server. Do not ask them to paste keys into chat.
+- Missing keys, or `botrelay_mcp` still has no `BOTRELAY_API_KEY` / `BOTRELAY_VAULT_KEY` after startup: `~/.config/botrelay/agent.env` is missing or incomplete. Ask the owner to install `botrelay-mcp` and `botrelay-cli` into `~/.venvs/botrelay` and run `botrelay agent configure`. That writes `agent.env` (mode 0600). Then reload the BotRelay MCP server. Do not ask them to paste keys into chat. The MCP package must load `agent.env` itself; Marketplace `mcp.json` does not source it.
 - 401 from the API: wrong or rotated `BOTRELAY_API_KEY` for this vault. Run `botrelay agent configure` again for this agent.
 - Decrypt errors: `BOTRELAY_VAULT_KEY` does not match this vault (or is not standard base64 of 32 bytes).
 - Import / launch errors: install into this machine's venv
