@@ -1,17 +1,17 @@
 {
-  "name": "botrelay",
+  "name": "BotRelay",
   "owner": {
     "name": "BotRelay",
     "email": "hello@botrelay.ai"
   },
   "metadata": {
-    "description": "Cursor plugin for BotRelay — zero-knowledge vault for AI agents"
+    "description": "A password manager built for AI agents. Give agents their own passsword vault, only the secrets they need, and the tools for secure access. BotRelay empowers your agents to do more, while keeping your secrets safe."
   },
   "plugins": [
     {
-      "name": "botrelay",
+      "name": "BotRelay",
       "source": ".",
-      "description": "Zero-knowledge vault MCP for AI agents"
+      "description": "A password manager built for AI agents. Give agents their own passsword vault, only the secrets they need, and the tools for secure access. BotRelay empowers your agents to do more, while keeping your secrets safe.""
     }
   ]
 }

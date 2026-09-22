@@ -4,7 +4,7 @@ BotRelay is a password manager built for AI agents. Give agents their own vault,
 
 This repository is the **public Cursor plugin** only. It launches the local stdio server from the PyPI package [`botrelay-mcp`](https://pypi.org/project/botrelay-mcp/) (which depends on [`botrelay`](https://pypi.org/project/botrelay/)). Ciphertext comes from the API; decryption stays on your machine.
 
-Before using this plugin, visit [botrelay.ai](https://botrelay.ai) to create an account, set up the password vault, and obtain an API key and a vault key.
+Before using this plugin, visit [botrelay.ai](https://botrelay.ai) to create an account, set up a password vault, and obtain an API key and a vault key.
 
 ## Install
 

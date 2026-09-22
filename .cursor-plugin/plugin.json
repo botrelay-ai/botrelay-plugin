@@ -2,12 +2,12 @@
   "name": "botrelay",
   "displayName": "BotRelay",
   "version": "0.1.0",
-  "description": "Secure password vault for AI agents. Empower agents to do more while keeping your secrets safe. Visit https://botrelay.ai for more information.",
+  "description": "A password manager built for AI agents. Give agents their own password vault, only the secrets they need, and the tools for secure access. BotRelay empowers agents to do more while keeping your secrets safe. Visit https://botrelay.ai for more information.",
   "author": {
     "name": "BotRelay"
   },
   "homepage": "https://botrelay.ai",
-  "repository": "https://github.com/chouseknecht/botrelay-plugin",
+  "repository": "https://github.com/botrelay-ai/botrelay-plugin",
   "keywords": [
     "botrelay",
     "vault",
@@ -49,7 +49,7 @@
       "BOTRELAY_PYTHON": {
         "type": "string",
         "title": "Optional BotRelay Python Path",
-        "description": "Optional override. Leave empty to use botrelay-mcp on PATH or the checkout .venv."
+        "description": "Leave empty to use botrelay-mcp on PATH or enter the checkout .venv."
       }
     },
     "required": [
