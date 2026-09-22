@@ -12,13 +12,15 @@
     "botrelay",
     "vault",
     "secrets",
-    "mcp",
+    "passwords",
     "zero-knowledge",
-    "agents",
+    "login",
+    "credentials",
     "security"
   ],
   "category": "integrations",
   "tags": [
+    "passwords",
     "secrets",
     "vault",
     "mcp"
