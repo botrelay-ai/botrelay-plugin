@@ -31,7 +31,10 @@ def test_cursor_manifest_declares_setup_fields() -> None:
     assert "api key" in variables["properties"]["BOTRELAY_API_KEY"]["title"].lower()
     assert "vault key" in variables["properties"]["BOTRELAY_VAULT_KEY"]["title"].lower()
     assert "python" in variables["properties"]["BOTRELAY_PYTHON"]["title"].lower()
-    assert "optional" in variables["properties"]["BOTRELAY_PYTHON"]["description"].lower()
+    py_desc = variables["properties"]["BOTRELAY_PYTHON"]["description"].lower()
+    assert "optional" in py_desc
+    assert "marketplace" in py_desc
+    assert "path" in py_desc
     assert "author" in manifest and "name" in manifest["author"]
     extra = set(manifest["author"]) - {"name", "email"}
     assert not extra
@@ -40,29 +43,37 @@ def test_cursor_manifest_declares_setup_fields() -> None:
 def test_mcp_configs_wire_env_like_apps_mcp() -> None:
     cursor_mcp = _load(MCP_JSON)
     server = cursor_mcp["mcpServers"]["botrelay"]
-    assert set(server) == {"command", "env"}
-    assert server["command"] == "botrelay-mcp"
+    assert set(server) == {"command", "args", "env"}
+    assert server["command"] == "bash"
+    assert server["args"][0] == "-c"
+    assert len(server["args"]) == 2
     for name in SETUP_FIELDS:
         assert server["env"][name] == "${" + name + "}"
     raw = json.dumps(server)
-    for match in re.findall(r"\$\{([^}]+)\}", raw):
+    for match in re.findall(r"\$\{([A-Z][A-Z0-9_]*)\}", raw):
         assert match in SETUP_FIELDS
     assert "CURSOR_PLUGIN_ROOT" not in raw
     assert "launch.sh" not in raw
 
 
-def test_mcp_command_is_console_script_not_a_workspace_path() -> None:
+def test_mcp_command_honors_botrelay_python_via_bash() -> None:
     """Marketplace cwd is the open workspace, not the plugin root.
 
     `./scripts/launch.sh` 404s when the workspace is a monorepo. Hosts such as
-    Grok Bot leave ${CURSOR_PLUGIN_ROOT} unexpanded. The PyPI console script
-    is on PATH and needs neither a plugin path nor a workspace path.
+    Grok Bot leave ${CURSOR_PLUGIN_ROOT} unexpanded. mcp.json launches via
+    bash -c so Configure's BOTRELAY_PYTHON selects the interpreter without a
+    plugin or workspace path; otherwise botrelay-mcp must be on PATH.
     """
     server = _load(MCP_JSON)["mcpServers"]["botrelay"]
-    assert server["command"] == "botrelay-mcp"
+    assert server["command"] == "bash"
     assert "/" not in server["command"]
     assert "\\" not in server["command"]
-    assert "args" not in server
+    assert server["args"][0] == "-c"
+    script = server["args"][1]
+    assert "BOTRELAY_PYTHON" in script
+    assert "-m botrelay_mcp" in script
+    assert "botrelay-mcp" in script
+    assert "*'${'*" in script or '*"${"*' in script
     assert "cwd" not in server
     raw = json.dumps(server)
     assert "launch.sh" not in raw
@@ -73,15 +84,21 @@ def test_mcp_command_is_console_script_not_a_workspace_path() -> None:
     assert (PLUGIN / "scripts" / "launch.sh").is_file()
 
 
-def test_readme_documents_console_script_on_path() -> None:
+def test_readme_documents_bash_launch_and_botrelay_python() -> None:
     readme = (PLUGIN / "README.md").read_text()
     assert "pip install botrelay-mcp" in readme
     how = readme.split("## How it works", 1)[1].split("## ", 1)[0]
+    assert "bash" in how.lower()
     assert "`botrelay-mcp`" in how
+    assert "BOTRELAY_PYTHON" in how
     assert "scripts/launch.sh" in how
     assert "./scripts/launch.sh" not in how
     assert "BOTRELAY_PYTHON" in readme
     assert "PATH" in readme
+    # Configure copy: optional python path drives Marketplace launch.
+    configure = readme.split("**Configure**", 1)[1].split("4.", 1)[0]
+    assert "BOTRELAY_PYTHON" in configure
+    assert "PATH" in configure
 
 
 def test_marketplace_points_at_plugin_root() -> None:
