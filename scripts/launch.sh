@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # Launch BotRelay's local stdio MCP server.
-# Prefer the installed PyPI console script; developers can use a checkout venv.
-# Cursor / Grok Bot should exec this with plugin setup env already injected.
-# Never echo BOTRELAY_API_KEY or BOTRELAY_VAULT_KEY.
+# Prefer BOTRELAY_PYTHON, then a PATH console script, then ~/.venvs/botrelay,
+# then a checkout venv, then python3/python. Never echo API or vault keys.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -42,6 +41,15 @@ resolve_repo_root() {
   return 1
 }
 
+# Leading ~/ is literal when the value is quoted. Configure examples use that form.
+expand_tilde() {
+  local value="${1:-}"
+  case "$value" in
+    "~/"*) printf '%s\n' "${HOME:-}/${value#"~/"}" ;;
+    *) printf '%s\n' "$value" ;;
+  esac
+}
+
 python_importable() {
   local py="$1"
   if [[ ! -x "$py" ]] && ! command -v "$py" >/dev/null 2>&1; then
@@ -77,12 +85,35 @@ checkout_python() {
   return 1
 }
 
-if ! is_missing "${BOTRELAY_PYTHON:-}" && python_importable "${BOTRELAY_PYTHON}"; then
-  exec "${BOTRELAY_PYTHON}" -m botrelay_mcp "$@"
+# Customer installs documented in the README. Shared MCP's GUI PATH is often empty.
+home_venv_python() {
+  local py
+  for py in \
+    "${HOME:-}/.venvs/botrelay/bin/python3" \
+    "${HOME:-}/.venvs/botrelay/bin/python" \
+    "${HOME:-}/.venvs/botrelay/Scripts/python.exe"
+  do
+    if [[ -x "$py" ]] && "$py" -c "import botrelay_mcp" >/dev/null 2>&1; then
+      printf '%s\n' "$py"
+      return 0
+    fi
+  done
+  return 1
+}
+
+if ! is_missing "${BOTRELAY_PYTHON:-}"; then
+  RESOLVED_PYTHON="$(expand_tilde "${BOTRELAY_PYTHON}")"
+  if python_importable "$RESOLVED_PYTHON"; then
+    exec "$RESOLVED_PYTHON" -m botrelay_mcp "$@"
+  fi
 fi
 
 if MCP_CONSOLE="$(console_script)"; then
   exec "$MCP_CONSOLE" "$@"
+fi
+
+if PYTHON_BIN="$(home_venv_python)"; then
+  exec "$PYTHON_BIN" -m botrelay_mcp "$@"
 fi
 
 if PYTHON_BIN="$(checkout_python)"; then
@@ -96,6 +127,7 @@ for PYTHON_BIN in python3 python; do
 done
 
 echo "botrelay-mcp is not importable." >&2
-echo "Customer install: python3 -m pip install botrelay-mcp" >&2
+echo 'Customer install: python3 -m venv "$HOME/.venvs/botrelay" && "$HOME/.venvs/botrelay/bin/pip" install botrelay-mcp' >&2
+echo "Or set BOTRELAY_PYTHON to that venv's python. A GUI launch often has no botrelay-mcp on PATH." >&2
 echo "Developer install: create a checkout .venv, install with pip -e, then run install-local.sh." >&2
 exit 1

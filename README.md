@@ -8,22 +8,16 @@ This repository is the **public Cursor plugin** only.
 
 ## Install
 
-Install `botrelay-mcp` before you add or enable the plugin. Cursor starts the MCP server as soon as the plugin is enabled. Marketplace launch runs a short `bash -c` wrapper: if Configure sets `BOTRELAY_PYTHON` to a real interpreter path, that Python runs `-m botrelay_mcp`; otherwise Cursor looks up `botrelay-mcp` on `PATH`.
+Install [`botrelay-mcp`](https://pypi.org/project/botrelay-mcp/) (Python 3.11 or newer) before you enable the plugin. Cursor starts the MCP server as soon as the plugin is enabled. The marketplace launcher is a `bash -c` resolver: it does not require `botrelay-mcp` on the GUI `PATH`.
 
-1. From a terminal, install [`botrelay-mcp`](https://pypi.org/project/botrelay-mcp/) with Python 3.11 or newer:
-
-   ```bash
-   pip install botrelay-mcp
-   ```
-
-   A virtualenv is the usual approach. Install into the venv, then either set Configure’s `BOTRELAY_PYTHON` to that venv’s `python`/`python3`, or put the venv `bin` directory on `PATH` for the Cursor process (a global install also puts `botrelay-mcp` on `PATH`):
+1. From a terminal, install into the venv the launcher probes even when Shared MCP injects no `BOTRELAY_PYTHON` and no `PATH` entry:
 
    ```bash
    python3 -m venv ~/.venvs/botrelay
    ~/.venvs/botrelay/bin/pip install botrelay-mcp
    ```
 
-   On Windows, `pip` installs `botrelay-mcp.exe` in the venv `Scripts` directory. Prefer setting `BOTRELAY_PYTHON` to that venv’s `python.exe`, or add the `Scripts` directory to `PATH`. Activating the venv in a terminal does not change the `PATH` Cursor uses when it starts the plugin.
+   On Windows, `pip` installs `botrelay-mcp.exe` under the venv `Scripts` directory. The launcher also checks `~/.venvs/botrelay/Scripts/python.exe`. Activating the venv in a terminal does not change the `PATH` Cursor uses when it starts the plugin.
 
 2. In Cursor **Settings**, click **Open Customize**, then **Browse Marketplace**. Find **BotRelay**, select **Install**, and choose a user or project scope.
 
@@ -34,7 +28,7 @@ Install `botrelay-mcp` before you add or enable the plugin. Cursor starts the MC
    - `BOTRELAY_API_URL` — default `https://api.botrelay.ai`
    - `BOTRELAY_API_KEY` — agent token (`brt_live_…`)
    - `BOTRELAY_VAULT_KEY` — base64 vault key
-   - `BOTRELAY_PYTHON` — optional. Absolute path to the venv’s `python`/`python3` that has `botrelay-mcp` installed, for example `~/.venvs/botrelay/bin/python3` or `C:\Users\you\.venvs\botrelay\Scripts\python.exe`. Marketplace launch uses this interpreter. If left empty, `botrelay-mcp` must be on `PATH`.
+   - `BOTRELAY_PYTHON` — optional. Path to the venv `python` or `python3` that has `botrelay-mcp` installed, for example `~/.venvs/botrelay/bin/python3` or `C:\Users\you\.venvs\botrelay\Scripts\python.exe`. Leave it empty when the package is in `~/.venvs/botrelay`. Set it when the venv lives somewhere else. `botrelay-mcp` on `PATH` is only a fallback; Shared MCP's GUI `PATH` often does not include it.
 
 4. Under MCPs, botrelay should have a green status with the message `3 tools enabled`. If this is not the case, click on botrelay under MCPs to reveal the configuration window. Turn the plugin on and off or click Reload to cause the new configuration to take effect.
 
@@ -42,9 +36,21 @@ Install `botrelay-mcp` before you add or enable the plugin. Cursor starts the MC
 
 ## How it works
 
-The plugin launches a local MCP server that agents use to open the vault. Marketplace starts that server with `bash -c`: it prefers Configure’s `BOTRELAY_PYTHON` (`python -m botrelay_mcp`) and falls back to the `botrelay-mcp` console script on `PATH`. No plugin or workspace path is required. Cursor Marketplace's working directory is the open workspace, and some hosts leave `${CURSOR_PLUGIN_ROOT}` unexpanded, so a path-based launcher is not cross-host safe. The server fetches ciphertext from the BotRelay API and decrypts it on the local machine. The vault key is never transmitted, and decryption is always done locally.
+The plugin launches a local MCP server that agents use to open the vault. Marketplace starts that server with `bash -c`. The resolver uses `BOTRELAY_PYTHON` when that value is a real interpreter, then `~/.venvs/botrelay`, then the `botrelay-mcp` console script on `PATH`, then `python3 -m botrelay_mcp`. It does not use a plugin or workspace path. The server fetches ciphertext from the BotRelay API and decrypts it on the local machine. The vault key is never transmitted, and decryption is always done locally.
 
-`scripts/launch.sh` stays in this repository for local development. It still honors `BOTRELAY_PYTHON` and a checkout virtualenv. Published `mcp.json` does not invoke it.
+`scripts/launch.sh` stays in this repository for local development. It honors `BOTRELAY_PYTHON`, a `botrelay-mcp` console script on `PATH`, the `~/.venvs/botrelay` install, and a checkout virtualenv. It does not print API or vault keys. Published `mcp.json` does not invoke it.
+
+## Troubleshooting
+
+### Status flashes green, then turns red (`botrelay-mcp: not found`)
+
+Cursor opens two connections for this plugin. The profile-scoped server receives Configure, including `BOTRELAY_PYTHON`, and connects. Shared MCP then spawns `botrelay` again. That spawn's working directory is the open workspace, its GUI `PATH` often has no `botrelay-mcp`, and it may omit `BOTRELAY_PYTHON` or pass the unsubstituted placeholder. A launcher that ended in `exec botrelay-mcp` hit `bash: exec: botrelay-mcp: not found` and the status went red.
+
+The marketplace command does not depend on process env alone. `BOTRELAY_PYTHON` is also its own `mcp.json` argument, so Cursor can expand the Configure value in `command`/`args` when it does not inject the variable. If both are empty, the launcher still runs `~/.venvs/botrelay/bin/python3` (then `python`, then `Scripts/python.exe`) when that file can `import botrelay_mcp`.
+
+`${CURSOR_PLUGIN_ROOT}` and a relative `scripts/launch.sh` are not used. Some hosts leave the variable unexpanded, and Shared MCP's current directory is the workspace, so a plugin-relative path does not resolve.
+
+stderr from a failed launch names the install steps and does not include the API key or vault key.
 
 ## License
 
