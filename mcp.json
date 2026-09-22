@@ -2,10 +2,7 @@
   "mcpServers": {
     "botrelay": {
       "command": "bash",
-      "args": [
-        "-c",
-        "if [ -n \"${BOTRELAY_PYTHON}\" ] && [[ \"${BOTRELAY_PYTHON}\" != *'${'* ]]; then exec \"${BOTRELAY_PYTHON}\" -m botrelay_mcp; else exec botrelay-mcp; fi"
-      ],
+      "args": ["${CURSOR_PLUGIN_ROOT}/scripts/launch.sh"],
       "env": {
         "BOTRELAY_API_URL": "${BOTRELAY_API_URL}",
         "BOTRELAY_API_KEY": "${BOTRELAY_API_KEY}",
