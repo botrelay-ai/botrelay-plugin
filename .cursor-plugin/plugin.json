@@ -1,7 +1,7 @@
 {
   "name": "botrelay",
   "displayName": "BotRelay",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A password manager built for AI agents. Give agents their own password vault, only the secrets they need, and the tools for secure access. BotRelay empowers agents to do more while keeping your secrets safe. Visit https://botrelay.ai for more information.",
   "author": {
     "name": "BotRelay"
@@ -25,7 +25,7 @@
     "vault",
     "mcp"
   ],
-  "logo": "assets/botrelay-logo-marketplace.svg",
+  "logo": "assets/botrelay-logo-marketplace.png",
   "skills": "./skills/",
   "rules": "./rules/",
   "commands": "./commands/",

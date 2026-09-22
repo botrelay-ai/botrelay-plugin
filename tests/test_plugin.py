@@ -21,7 +21,15 @@ def test_cursor_manifest_has_no_configure_variables() -> None:
     raw = CURSOR_MANIFEST.read_text()
     assert manifest["name"] == "botrelay"
     assert manifest["displayName"] == "BotRelay"
-    assert manifest["version"] == "0.1.1"
+    assert manifest["version"] == "0.1.2"
+    assert manifest["logo"] == "assets/botrelay-logo-marketplace.png"
+    logo = PLUGIN / manifest["logo"]
+    assert logo.is_file()
+    png = logo.read_bytes()
+    assert png[:8] == b"\x89PNG\r\n\x1a\n"
+    assert int.from_bytes(png[16:20], "big") == 256
+    assert int.from_bytes(png[20:24], "big") == 256
+    assert png[25] == 6  # RGBA
     assert manifest["mcpServers"] == "./mcp.json"
     assert manifest["skills"] == "./skills/"
     assert manifest["rules"] == "./rules/"
@@ -380,7 +388,7 @@ def test_skill_and_rule_frontmatter() -> None:
 
 
 def test_plugin_docs_and_defs_omit_stage_host() -> None:
-    skip_suffixes = {".svg", ".pyc"}
+    skip_suffixes = {".svg", ".png", ".pyc"}
     skip_dirs = {".pytest_cache", "__pycache__", "tests"}
     for path in PLUGIN.rglob("*"):
         if not path.is_file() or path.suffix in skip_suffixes:
@@ -392,7 +400,7 @@ def test_plugin_docs_and_defs_omit_stage_host() -> None:
 
 
 def test_plugin_tree_has_no_real_tokens() -> None:
-    skip_suffixes = {".svg", ".pyc"}
+    skip_suffixes = {".svg", ".png", ".pyc"}
     skip_dirs = {".pytest_cache", "__pycache__", "tests"}
     for path in PLUGIN.rglob("*"):
         if not path.is_file() or path.suffix in skip_suffixes:
