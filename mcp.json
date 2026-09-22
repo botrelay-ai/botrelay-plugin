@@ -1,8 +1,7 @@
 {
   "mcpServers": {
     "botrelay": {
-      "command": "bash",
-      "args": ["./scripts/launch.sh"],
+      "command": "botrelay-mcp",
       "env": {
         "BOTRELAY_API_URL": "${BOTRELAY_API_URL}",
         "BOTRELAY_API_KEY": "${BOTRELAY_API_KEY}",
