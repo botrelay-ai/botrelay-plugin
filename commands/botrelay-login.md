@@ -50,7 +50,7 @@ The CLI prompts for three labels only: API URL (default `https://api.botrelay.ai
 
    Do not use browser form-fill tools to write `agent.env`.
 
-5. After a new or updated `agent.env`, tell the user to reload the BotRelay MCP server so `botrelay_mcp` loads the file. Marketplace `mcp.json` does not source that file. If the status stays Not connected, fully quit and reopen. Reload Window is not enough.
+5. After a new or updated `agent.env`, the daemon reloads the file on the next tool call when its size or mtime changes. You do not need to kill the daemon for that. Marketplace `mcp.json` does not source that file. If the shim already exited, tell the user to reload so the host launches it again. If the status stays Not connected, fully quit and reopen. Reload Window is not enough. A daemon file reload does not replace that host reconnect.
 
 6. Call the BotRelay MCP tool `get_vault`.
 
