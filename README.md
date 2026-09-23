@@ -10,7 +10,7 @@ This repository is the **public Cursor plugin** only. It does not contain the MC
 
 When this plugin is enabled, Cursor and Grok launch a short-lived **shim**. The shim speaks MCP on stdio and forwards to one long-lived local **daemon**. The daemon reads `~/.config/botrelay/agent.env` for the API key and vault key. Before enabling the plugin, install `botrelay-mcp` **0.2.0 or newer** and run the configure step. The following walks through it:
 
-The venv and `agent.env` belong to the machine that runs the agent. Cursor on a Mac and a Grok Bot agent do not share them. See [Grok Bot](#grok-bot).
+The venv and `agent.env` belong to the machine that runs the agent. Cursor on a local Mac/PC and a Grok Bot agent do not share them. See [Grok Bot](#grok-bot).
 
 1. From a terminal, install the MCP package and CLI:
 
