@@ -51,7 +51,7 @@ The CLI prompts for three labels only: API URL (default `https://api.botrelay.ai
 
    Do not use browser form-fill tools to write `agent.env`.
 
-5. Hosted MCP will not list tools until **Plugins → Configure** has `BOTRELAY_API_KEY` (the same agent API key, `brt_live_…`). Tell the user to set that variable in the plugin UI. Do not ask them to paste it into chat. Do not put the vault key there. After they save it, reload the BotRelay MCP server so the host reconnects to `https://api.botrelay.ai/mcp` with `Authorization: Bearer`.
+5. Hosted MCP will not list tools until **Plugins → Configure** has `BOTRELAY_API_KEY` (the same agent API key, `brt_live_…`). Tell the user to set that variable in the plugin UI. Do not ask them to paste it into chat. Do not put the vault key there. After they save it, reload the BotRelay MCP server so the host reconnects to `https://api.botrelay.ai/mcp/` with `Authorization: Bearer`.
 
 6. Call the BotRelay MCP tool `get_vault`. Optionally confirm the same metadata with `~/.venvs/botrelay/bin/botrelay agent vault`. Do not call `get_secret` or `botrelay agent get` during login.
 

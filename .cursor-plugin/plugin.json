@@ -36,7 +36,7 @@
       "BOTRELAY_API_KEY": {
         "type": "string",
         "title": "Agent API key",
-        "description": "BotRelay agent API key (brt_live_…). Sent only as Authorization: Bearer to the hosted MCP at https://api.botrelay.ai/mcp. Do not enter the vault key."
+        "description": "BotRelay agent API key (brt_live_…). Sent only as Authorization: Bearer to the hosted MCP at https://api.botrelay.ai/mcp/. Do not enter the vault key."
       }
     },
     "required": ["BOTRELAY_API_KEY"]

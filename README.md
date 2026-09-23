@@ -2,7 +2,7 @@
 
 BotRelay is a password manager built for AI agents. Give agents their own password vault, only the secrets they need, and the tools for secure access.
 
-This plugin connects Cursor and Grok to **hosted MCP** at `https://api.botrelay.ai/mcp`, which returns vault metadata and **sealed** secrets (ciphertext). Secrets are not returned as plaintext.
+This plugin connects Cursor and Grok to **hosted MCP** at `https://api.botrelay.ai/mcp/`, which returns vault metadata and **sealed** secrets (ciphertext). Secrets are not returned as plaintext.
 
 Agents install `botrelay-cli` on their machines to decrypt secrets locally. This way secrets are never transmitted in plain text, and the vault key is never shared. Vault keys are not sent to the API and never placed in an MCP header.
 
@@ -41,7 +41,7 @@ The venv and `agent.env` belong on the agent's local machine. Cursor agents can 
 
    Until BotRelay appears in the Marketplace, use **Add Marketplace**, choose **Import from GitHub** and paste `https://github.com/botrelay-ai/botrelay-plugin`.
 
-4. Open **Plugins → Configure** for BotRelay and set **Agent API key** (`BOTRELAY_API_KEY`, the `brt_live_…` value). Cursor sends it as `Authorization: Bearer` to `https://api.botrelay.ai/mcp`. Do not enter the vault key. Plugin config does not read `agent.env`.
+4. Open **Plugins → Configure** for BotRelay and set **Agent API key** (`BOTRELAY_API_KEY`, the `brt_live_…` value). Cursor sends it as `Authorization: Bearer` to `https://api.botrelay.ai/mcp/`. The shipped `mcp.json` sets `"type": "http"` and keeps the trailing slash on that URL. Do not enter the vault key. Plugin config does not read `agent.env`.
 
    Reload the BotRelay MCP server after saving the key. Under MCPs, botrelay should show a green status with `3 tools enabled`: `get_vault`, `list_secrets`, and `get_secret`.
 
@@ -57,7 +57,7 @@ Cursor and Grok open one remote MCP connection. Tools return ciphertext and meta
 
 ```
 Cursor / Grok
-    |  HTTPS  https://api.botrelay.ai/mcp
+    |  HTTPS  https://api.botrelay.ai/mcp/
     |  Authorization: Bearer agent API key
     v
 Hosted MCP  (get_vault, list_secrets, get_secret)
@@ -72,7 +72,7 @@ This machine
     vault key stays in that file
 ```
 
-`mcp.json` points at `https://api.botrelay.ai/mcp` and substitutes the plugin variable `BOTRELAY_API_KEY` into the Bearer header. It does not start a command, does not read `agent.env`, and has no vault-key field. Set the variable under **Plugins → Configure**. The Marketplace MCP entry is read-only in the dashboard; that Configure field is how the host receives the agent API key.
+`mcp.json` sets `"type": "http"` and points at `https://api.botrelay.ai/mcp/` (trailing slash). It substitutes the plugin variable `BOTRELAY_API_KEY` into the Bearer header. It does not start a command, does not read `agent.env`, and has no vault-key field. Set the variable under **Plugins → Configure**. The Marketplace MCP entry is read-only in the dashboard; that Configure field is how the host receives the agent API key.
 
 `get_vault` returns `id`, `name`, and `labels`. `list_secrets` returns labels and types. `get_secret` returns a sealed row (ciphertext and metadata), not a `Password`, `ApiKey`, or `Contact` dict.
 
@@ -93,7 +93,7 @@ Decrypt output is the typed secret. Use it in the action that needs it. Do not p
 
 `scripts/launch.sh` is a retired local entrypoint. Running it exits with these instructions and does not start a server. Do not point an MCP config at it.
 
-Internal dogfood can use `https://stage.botrelay.ai/mcp` in a private MCP config. This plugin's `mcp.json` stays on production `https://api.botrelay.ai/mcp`.
+Internal dogfood can use `https://stage.botrelay.ai/mcp/` in a private MCP config. This plugin's `mcp.json` stays on production `https://api.botrelay.ai/mcp/`.
 
 ### Credential changes
 
@@ -145,6 +145,8 @@ Browser logins on the VM are separate from your Mac/PC browser. Sites often trea
 ### MCP has no tools, or returns 401
 
 The host is not presenting a valid agent API key. Set `BOTRELAY_API_KEY` under **Plugins → Configure** (the `brt_live_…` key only), then reload the BotRelay MCP server. Do not put the vault key in that field. `mcp.json` only contains the `${BOTRELAY_API_KEY}` placeholder.
+
+That file must declare `"type": "http"` and the URL `https://api.botrelay.ai/mcp/` (trailing slash). Without `"type": "http"`, Cursor does not expand or send the Bearer header, and the server answers 401. Without the trailing slash, the API edge can redirect the client onto an `http://` URL and the call fails. Marketplace installs ship this shape. Do not remove `type` or the slash in a local override.
 
 A 401 after a key rotation means the plugin variable and `agent.env` are out of date. Update both. The plugin variable is what hosted MCP sees. `agent.env` is what the CLI uses, and the file wins over the process environment.
 

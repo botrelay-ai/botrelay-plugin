@@ -6,7 +6,7 @@ from pathlib import Path
 PLUGIN = Path(__file__).resolve().parents[1]
 CURSOR_MANIFEST = PLUGIN / ".cursor-plugin" / "plugin.json"
 MCP_JSON = PLUGIN / "mcp.json"
-HOSTED_MCP_URL = "https://api.botrelay.ai/mcp"
+HOSTED_MCP_URL = "https://api.botrelay.ai/mcp/"
 
 
 def _load(path: Path) -> dict:
@@ -48,7 +48,8 @@ def test_cursor_manifest_declares_api_key_variable_only() -> None:
 
 def test_mcp_json_is_hosted_http_with_bearer_api_key_only() -> None:
     server = _load(MCP_JSON)["mcpServers"]["botrelay"]
-    assert set(server) == {"url", "headers"}
+    assert set(server) == {"type", "url", "headers"}
+    assert server["type"] == "http"
     assert server["url"] == HOSTED_MCP_URL
     assert server["headers"] == {"Authorization": "Bearer ${BOTRELAY_API_KEY}"}
     raw = MCP_JSON.read_text()
@@ -85,10 +86,12 @@ def test_readme_documents_hosted_mcp_and_local_unlock() -> None:
     assert "botrelay-mcp" in readme
     assert "deprecated" in readme.lower()
     how = readme.split("## How it works", 1)[1].split("## ", 1)[0]
-    assert "https://api.botrelay.ai/mcp" in how
+    assert HOSTED_MCP_URL in how
     assert "Authorization: Bearer" in how
     assert "agent.env" in how
     assert "does not start a command" in how
+    assert '"type": "http"' in how
+    assert "trailing slash" in how.lower()
     assert "vault key" in how.lower()
     assert "python -m botrelay_mcp" not in readme
     assert "daemon" not in readme.lower()
@@ -97,6 +100,9 @@ def test_readme_documents_hosted_mcp_and_local_unlock() -> None:
     assert "named pipe" not in readme.lower()
     trouble = readme.split("## Troubleshooting", 1)[1]
     assert "Plugins → Configure" in trouble
+    assert '"type": "http"' in trouble
+    assert "https://api.botrelay.ai/mcp/" in trouble
+    assert "trailing slash" in trouble.lower()
     assert "get_secret" in trouble
     assert "botrelay agent decrypt" in trouble
     assert "botrelay-mcp" in trouble
@@ -146,7 +152,7 @@ def test_skill_and_login_teach_hosted_mcp_and_local_decrypt() -> None:
         assert ".config/botrelay/agent.env" in text, path
         assert "pip install -U botrelay-cli" in text, path
         assert "pip install -U botrelay-mcp" not in text, path
-        assert "https://api.botrelay.ai/mcp" in text, path
+        assert HOSTED_MCP_URL in text, path
         assert "API key (`brt_live_…`)" in text, path
         assert "Vault key" in text or "vault key" in text, path
         assert "--api-url" in text and "--api-key" in text and "--vault-key" in text, path
@@ -174,7 +180,7 @@ def test_skill_and_login_teach_hosted_mcp_and_local_decrypt() -> None:
     assert "does not create `agent.env` on the Grok VM" in rule
     assert "browser form-fill tools to write `agent.env`" in rule.lower()
     assert "BOTRELAY_VAULT_KEY" in rule
-    assert "https://api.botrelay.ai/mcp" in rule
+    assert HOSTED_MCP_URL in rule
     assert "botrelay agent decrypt" in rule
     assert "sealed" in rule.lower()
     assert "daemon" not in rule.lower()
