@@ -1,8 +1,8 @@
 {
   "name": "botrelay",
   "displayName": "BotRelay",
-  "version": "0.1.2",
-  "description": "A password manager built for AI agents. Give agents their own password vault, only the secrets they need, and the tools for secure access. BotRelay empowers agents to do more while keeping your secrets safe. Visit https://botrelay.ai for more information.",
+  "version": "0.2.0",
+  "description": "A password manager built for AI agents. Hosted MCP returns sealed secrets; botrelay-cli decrypts them on your machine. Give agents their own vault, only the secrets they need, and tools that keep the vault key local. Visit https://botrelay.ai for more information.",
   "author": {
     "name": "BotRelay"
   },
@@ -30,5 +30,16 @@
   "rules": "./rules/",
   "commands": "./commands/",
   "mcpServers": "./mcp.json",
+  "variables": {
+    "type": "object",
+    "properties": {
+      "BOTRELAY_API_KEY": {
+        "type": "string",
+        "title": "Agent API key",
+        "description": "BotRelay agent API key (brt_live_…). Sent only as Authorization: Bearer to the hosted MCP at https://api.botrelay.ai/mcp. Do not enter the vault key."
+      }
+    },
+    "required": ["BOTRELAY_API_KEY"]
+  },
   "license": "MIT"
 }
