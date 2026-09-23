@@ -5,11 +5,11 @@ description: Secure password vault for AI agents. Use when logging into BotRelay
 
 # BotRelay secrets
 
-This plugin wraps the **local** BotRelay MCP (`apps/mcp`). Ciphertext is fetched from the API and decrypted **in this process** with `BOTRELAY_VAULT_KEY`. The vault key must never be sent to `api.botrelay.ai` or any other host.
+This plugin wraps the **local** BotRelay MCP (`apps/mcp`). The host launches a short-lived stdio shim (`python -m botrelay_mcp`) that forwards to one long-lived local daemon. Ciphertext is fetched from the API and decrypted in that daemon. The vault key never leaves the daemon and must never be sent to `api.botrelay.ai` or any other host.
 
 The install is bound to a single vault. Access secrets from this vault only for the current task. Don't hunt credentials for other bots or workflows.
 
-Credentials for this machine live in `~/.config/botrelay/agent.env` (mode 0600), written by `botrelay agent configure`. The `botrelay_mcp` package loads that file on startup. Marketplace `mcp.json` does not source it. The file holds exactly three settings: `BOTRELAY_API_URL`, `BOTRELAY_API_KEY`, and `BOTRELAY_VAULT_KEY`. Local/dev `scripts/launch.sh` also reads `$BOTRELAY_HOME/agent.env` when `BOTRELAY_HOME` is set.
+Credentials for this machine live in `~/.config/botrelay/agent.env` (mode 0600), written by `botrelay agent configure`. The daemon prefers that file over the process environment and over `mcp.json` env, and reloads it on the next tool call when the file's size or mtime changes. You do not need to kill the daemon for that. Marketplace `mcp.json` does not source it. The file holds exactly three settings: `BOTRELAY_API_URL`, `BOTRELAY_API_KEY`, and `BOTRELAY_VAULT_KEY`. Local/dev `scripts/launch.sh` also reads `$BOTRELAY_HOME/agent.env` when `BOTRELAY_HOME` is set.
 
 ## Which machine
 
@@ -19,7 +19,7 @@ Grok Bot agents share one virtual machine. Each agent has its own desktop and br
 
 Cursor on a Mac is a separate machine. `botrelay agent configure` in Cursor on a Mac does not create `agent.env` on the Grok VM. Configuring the Grok VM does not create `agent.env` on the Mac. The same API key and vault key are fine on both machines. Each machine gets its own local `agent.env`.
 
-Marketplace `mcp.json` starts `python -m botrelay_mcp` from `~/.venvs/botrelay` on the machine that is running the agent (or `BOTRELAY_PYTHON` when that interpreter can `import botrelay_mcp`). The `botrelay_mcp` package loads that machine's `agent.env`.
+Marketplace `mcp.json` starts the shim with `python -m botrelay_mcp` from `~/.venvs/botrelay` on the machine that is running the agent (or `BOTRELAY_PYTHON` when that interpreter can `import botrelay_mcp`). The daemon on that machine loads that machine's `agent.env`. `botrelay-mcp` 0.2.0 or newer is the shim and daemon; install it with `pip install -U` once that release is published.
 
 ## Log into BotRelay and get the vault information
 
@@ -72,7 +72,7 @@ When the user asks to log into BotRelay, get vault information, or runs `/botrel
 
    With no TTY, the CLI also reads `BOTRELAY_API_URL`, `BOTRELAY_API_KEY`, and `BOTRELAY_VAULT_KEY` from the environment. `--yes` overwrites an existing file without a confirmation prompt. Do not use browser form-fill tools to write `agent.env`.
 
-5. After a new or updated `agent.env`, tell the user to reload the BotRelay MCP server so `botrelay_mcp` loads the file. Marketplace `mcp.json` does not source it. If the status stays Not connected, fully quit and reopen. Reload Window is not enough.
+5. After a new or updated `agent.env`, the daemon reloads the file on the next tool call when its size or mtime changes. You do not need to kill the daemon for that. Marketplace `mcp.json` does not source the file. If the shim already exited, tell the user to reload so the host launches it again. If the status stays Not connected, fully quit and reopen. Reload Window is not enough. A daemon file reload does not replace that host reconnect.
 
 6. Call `get_vault`.
 
@@ -108,7 +108,7 @@ When the user asks to log into BotRelay, get vault information, or runs `/botrel
 
 ## If tools fail
 
-- Missing keys, or `botrelay_mcp` still has no `BOTRELAY_API_KEY` / `BOTRELAY_VAULT_KEY` after startup: `~/.config/botrelay/agent.env` is missing or incomplete on **this** machine. On a Grok agent, a file on the user's Mac does not count. Install `botrelay-mcp` and `botrelay-cli` into `~/.venvs/botrelay` with `pip install -U` when `import botrelay_mcp` fails, then run `botrelay agent configure` (TTY and desktop handoff, or secure secret inputs plus `--api-url`, `--api-key`, and `--vault-key`). That writes `agent.env` (mode 0600) with the API URL, API key, and vault key. Then reload the BotRelay MCP server. Do not ask them to paste keys into chat. The MCP package must load `agent.env` itself; Marketplace `mcp.json` does not source it.
+- Missing keys, startup health failure, or `botrelay_mcp` still has no `BOTRELAY_API_KEY` / `BOTRELAY_VAULT_KEY`: `~/.config/botrelay/agent.env` is missing, invalid, or rejected on **this** machine. The shim then exits non-zero with a precise stderr error and empty stdout, and the host stays Not connected. On a Grok agent, a file on the user's Mac does not count. Install `botrelay-mcp` (>=0.2.0 once published) and `botrelay-cli` into `~/.venvs/botrelay` with `pip install -U` when `import botrelay_mcp` fails, then run `botrelay agent configure` (TTY and desktop handoff, or secure secret inputs plus `--api-url`, `--api-key`, and `--vault-key`). That writes `agent.env` (mode 0600) with the API URL, API key, and vault key. Let the host relaunch the shim. If the daemon is already running, it reloads a changed `agent.env` on the next tool call; do not kill it for that. If the status stays Not connected, fully quit and reopen. Do not ask them to paste keys into chat. The daemon must load `agent.env` itself; Marketplace `mcp.json` does not source it.
 - 401 from the API: wrong or rotated API key for this vault. Run `botrelay agent configure` again on this machine.
 - Decrypt errors: `BOTRELAY_VAULT_KEY` does not match this vault (or is not standard base64 of 32 bytes).
 - Import / launch errors: install into this machine's venv
