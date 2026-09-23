@@ -100,7 +100,7 @@ This release uses a Unix domain socket (mode `0600`). Windows named pipes are no
 
 ## Grok Bot
 
-Grok Bot agents run browser tasks on a shared virtual machine. Each agent has its own desktop and browser window on that VM. They share one filesystem there, including `~/.venvs/botrelay` and `~/.config/botrelay/agent.env`. The VM is not your laptop. Cursor's `~/.venvs/botrelay` and `~/.config/botrelay/agent.env` on a Mac do not carry over. `botrelay agent configure` in Cursor on a Mac does not create `agent.env` on the Grok VM. Configuring the Grok VM does not create `agent.env` on the Mac.
+Grok Bot agents run browser tasks on a shared virtual machine. Each agent has its own desktop and browser window on that VM. They share one filesystem there, including `~/.venvs/botrelay` and `~/.config/botrelay/agent.env`. The VM is not your laptop. Cursor's `~/.venvs/botrelay` and `~/.config/botrelay/agent.env` on a local Mac/PC do not carry over. `botrelay agent configure` in Cursor on a local Mac/PC does not create `agent.env` on the Grok VM. Configuring the Grok VM does not create `agent.env` on the local Mac/PC.
 
 For BotRelay to work for those agents:
 
@@ -137,7 +137,7 @@ Cursor on a Mac is a separate machine. The same API key and vault key are fine w
 
 The plugin starts `python -m botrelay_mcp` from `~/.venvs/botrelay` on the machine that is running the agent. That process is the shim. The daemon on that machine loads that machine's `agent.env`. Marketplace `mcp.json` does not source the file.
 
-Browser logins on the VM are separate from your Mac browser. Sites often treat the VM as a new device and ask for a one-time code.
+Browser logins on the VM are separate from your Mac/PC browser. Sites often treat the VM as a new device and ask for a one-time code.
 
 ## Troubleshooting
 
@@ -167,7 +167,7 @@ If the shim already exited, or the status stays Not connected after Reload, full
 
 ### Works in Cursor, fails in a Grok agent
 
-A green BotRelay status in Cursor on your Mac does not mean the Grok virtual machine has `botrelay-mcp` or `~/.config/botrelay/agent.env`. Those paths are local to each machine, and so is the daemon. Configuring Cursor on a Mac does not create `agent.env` on the Grok VM. See [Grok Bot](#grok-bot).
+A green BotRelay status in Cursor on your Mac/PC does not mean the Grok virtual machine has `botrelay-mcp` or `~/.config/botrelay/agent.env`. Those paths are local to each machine, and so is the daemon. Configuring Cursor on a Mac/PC does not create `agent.env` on the Grok VM. See [Grok Bot](#grok-bot).
 
 ## License
 
