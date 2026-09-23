@@ -2,7 +2,9 @@
 
 BotRelay is a password manager built for AI agents. Give agents their own password vault, only the secrets they need, and the tools for secure access.
 
-This plugin connects Cursor and Grok to **hosted MCP** at `https://api.botrelay.ai/mcp`. That server returns vault metadata and **sealed** secrets (ciphertext). It does not return plaintext. Install `botrelay-cli` on the machine that runs the agent and unlock secrets there. The vault key stays in a local file. It is never sent to the API and never placed in MCP headers.
+This plugin connects Cursor and Grok to **hosted MCP** at `https://api.botrelay.ai/mcp`, which returns vault metadata and **sealed** secrets (ciphertext). Secrets are not returned as plaintext.
+
+Agents install `botrelay-cli` on their machines to decrypt secrets locally. This way secrets are never transmitted in plain text, and the vault key is never shared. Vault keys are not sent to the API and never placed in an MCP header.
 
 Before using this plugin, visit [botrelay.ai](https://botrelay.ai) to create an account and set up a password vault.
 
@@ -10,7 +12,7 @@ This repository is the **public Cursor plugin** only. It does not contain the CL
 
 ## Install
 
-The venv and `agent.env` belong to the machine that runs the CLI. Cursor on a local Mac/PC and a Grok Bot agent do not share them. Hosted MCP auth is set per account under **Plugins → Configure**. See [Grok Bot](#grok-bot).
+The venv and `agent.env` belong on the agent's local machine. Cursor agents can run on a local Mac/PC while Grok Bot agents access a virtual machine in the cloud. The first two steps in the following instructions will need to be performed on the local machine hosting Cursor agents and on the Grok Bot virtual machine.
 
 1. From a terminal, install the CLI:
 
