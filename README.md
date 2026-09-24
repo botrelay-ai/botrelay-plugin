@@ -12,7 +12,7 @@ This repository is the **public Cursor plugin** only. It does not contain the CL
 
 ## Install
 
-The venv and `agent.env` belong on the agent's local machine. Cursor agents can run on a local Mac/PC while Grok Bot agents access a virtual machine in the cloud. The first two steps in the following instructions will need to be performed on the local machine hosting Cursor agents and on the Grok Bot virtual machine.
+Performing local decryption of secrets requires the `botrelay-cli` Python package and a `~/.config/botrealy/agent.env` file containing the vault key. Depending on the agent, this may be a hosted virtual machine or the local PC/Mac where Cursor and/or Grok Bot is installed. The first two steps in the following instructions will need to be performed on each machine where secret decryption is expected:
 
 1. From a terminal, install the CLI:
 
