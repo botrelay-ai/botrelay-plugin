@@ -39,7 +39,7 @@ def test_launch_is_tombstoned(tmp_path: Path) -> None:
     assert proc.returncode == 1
     assert proc.stdout == ""
     err = proc.stderr
-    assert "https://api.botrelay.ai/mcp" in err
+    assert "https://api.botrelay.ai/mcp/" in err
     assert "botrelay-cli" in err
     assert "agent decrypt" in err
     assert "agent get" in err

@@ -56,7 +56,7 @@ def test_launch_sh_tombstone_ignores_agent_env_and_secrets(tmp_path: Path) -> No
     assert proc.returncode == 1
     assert proc.stdout == ""
     blob = proc.stderr
-    assert "https://api.botrelay.ai/mcp" in blob
+    assert "https://api.botrelay.ai/mcp/" in blob
     assert "no longer starts a local MCP process" in blob
     assert "agent configure" in blob
     assert "agent decrypt" in blob

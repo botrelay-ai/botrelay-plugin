@@ -7,7 +7,7 @@ cat >&2 <<'EOF'
 BotRelay Marketplace no longer starts a local MCP process.
 
 Cursor and Grok connect to the hosted MCP endpoint:
-  https://api.botrelay.ai/mcp
+  https://api.botrelay.ai/mcp/
 Set the plugin variable BOTRELAY_API_KEY (agent API key only) under Plugins → Configure.
 That value is sent as Authorization: Bearer. Do not put the vault key in plugin config or MCP headers.
 

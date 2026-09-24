@@ -5,7 +5,7 @@ description: Secure password vault for AI agents. Use when logging into BotRelay
 
 # BotRelay secrets
 
-Hosted MCP at `https://api.botrelay.ai/mcp` (streamable HTTP) returns metadata and **sealed** secrets only. Plaintext is produced on this machine by `botrelay-cli`. The vault key never goes to the API, into MCP headers, or into plugin variables.
+Hosted MCP at `https://api.botrelay.ai/mcp/` (streamable HTTP, `"type": "http"`) returns metadata and **sealed** secrets only. Plaintext is produced on this machine by `botrelay-cli`. The vault key never goes to the API, into MCP headers, or into plugin variables.
 
 The install is bound to a single vault. Access secrets from this vault only for the current task. Don't hunt credentials for other bots or workflows.
 
@@ -28,7 +28,7 @@ Grok Bot agents share one virtual machine. Each agent has its own desktop and br
 
 Cursor on a Mac is a separate machine. `botrelay agent configure` in Cursor on a Mac does not create `agent.env` on the Grok VM. Configuring the Grok VM does not create `agent.env` on the Mac. The same API key and vault key are fine on both machines. Each machine gets its own local `agent.env`.
 
-Hosted MCP auth is per Cursor or Grok account: set `BOTRELAY_API_KEY` under **Plugins → Configure** on each account that should call `https://api.botrelay.ai/mcp`. That setting is not `agent.env`.
+Hosted MCP auth is per Cursor or Grok account: set `BOTRELAY_API_KEY` under **Plugins → Configure** on each account that should call `https://api.botrelay.ai/mcp/`. That setting is not `agent.env`.
 
 ## Log into BotRelay and get the vault information
 
@@ -80,7 +80,7 @@ When the user asks to log into BotRelay, get vault information, or runs `/botrel
 
    `--yes` overwrites an existing file without a confirmation prompt. Do not use browser form-fill tools to write `agent.env`. After the file exists, CLI commands use it instead of the process environment. Re-run configure to change keys. Do not expect exported variables to override `agent.env`.
 
-5. If hosted MCP is not connected, tell the user to set plugin variable `BOTRELAY_API_KEY` under **Plugins → Configure** (agent API key only) and reload the BotRelay MCP server. Do not ask them to paste the key into chat. Do not enter the vault key. The host then calls `https://api.botrelay.ai/mcp` with `Authorization: Bearer`.
+5. If hosted MCP is not connected, tell the user to set plugin variable `BOTRELAY_API_KEY` under **Plugins → Configure** (agent API key only) and reload the BotRelay MCP server. Do not ask them to paste the key into chat. Do not enter the vault key. The host then calls `https://api.botrelay.ai/mcp/` with `Authorization: Bearer`.
 
 6. Call `get_vault`. Optionally confirm the same metadata with `~/.venvs/botrelay/bin/botrelay agent vault`. Do not call `botrelay agent get` during login.
 
@@ -140,7 +140,7 @@ Then:
 
 ## If tools fail
 
-- Hosted MCP missing or unauthorized: set `BOTRELAY_API_KEY` under **Plugins → Configure** (agent API key only), then reload the BotRelay MCP server. A 401 means that key is wrong or rotated. Update the plugin variable and re-run `botrelay agent configure` on this machine so `agent.env` matches. Do not ask the user to paste the key into chat.
+- Hosted MCP missing or unauthorized: set `BOTRELAY_API_KEY` under **Plugins → Configure** (agent API key only), then reload the BotRelay MCP server. A 401 means that key is wrong or rotated, or the host did not send the Bearer header. Marketplace `mcp.json` must keep `"type": "http"` and the trailing slash on `https://api.botrelay.ai/mcp/`. Update the plugin variable and re-run `botrelay agent configure` on this machine so `agent.env` matches. Do not ask the user to paste the key into chat.
 - `get_secret` is not a password dict: that is expected. Run `botrelay agent decrypt` on the sealed JSON, or `botrelay agent get <label>`.
 - CLI missing keys or decrypt errors: `~/.config/botrelay/agent.env` is missing, invalid, or the vault key does not match this vault (or is not standard base64 of 32 bytes). On a Grok agent, a file on the user's Mac does not count. Install `botrelay-cli` into `~/.venvs/botrelay` with `pip install -U botrelay-cli`, then run `botrelay agent configure` (TTY and desktop handoff, or secure secret inputs plus `--api-url`, `--api-key`, and `--vault-key`).
 - `botrelay agent decrypt` is not a subcommand: upgrade `botrelay-cli`. Do not install `botrelay-mcp` to replace it.
