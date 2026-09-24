@@ -37,11 +37,7 @@
         "type": "string",
         "title": "API base URL",
         "description": "Base URL of BotRelay API. Do not include /mcp/ in this value.",
-        "default": "https://api.botrelay.ai",
-        "enum": [
-          "https://api.botrelay.ai",
-          "https://stage.botrelay.ai"
-        ]
+        "default": "https://api.botrelay.ai"
       },
       "BOTRELAY_API_KEY": {
         "type": "string",

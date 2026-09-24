@@ -45,13 +45,14 @@ def test_cursor_manifest_declares_api_base_url_and_api_key() -> None:
     assert base_url["type"] == "string"
     assert base_url["title"] == "API base URL"
     assert base_url["default"] == PROD_ORIGIN
-    assert base_url["enum"] == [PROD_ORIGIN, STAGE_ORIGIN]
-    assert "stage" in base_url["description"].lower()
-    assert "/mcp/" in base_url["description"]
+    assert "enum" not in base_url
+    assert base_url["description"] == (
+        "Base URL of BotRelay API. Do not include /mcp/ in this value."
+    )
     api_key = variables["properties"]["BOTRELAY_API_KEY"]
     assert api_key["type"] == "string"
-    assert "vault key" in api_key["description"].lower()
-    assert "API_BASE_URL" in api_key["description"]
+    assert api_key["title"] == "API key"
+    assert "enum" not in api_key
     assert "default" not in api_key
     assert "BOTRELAY_VAULT_KEY" not in raw
     assert "brt_live_" not in raw or "brt_live_…" in raw
@@ -261,10 +262,7 @@ def test_stage_host_is_a_documented_origin_not_hardcoded_in_mcp() -> None:
         text = path.read_text(errors="replace")
         if "stage.botrelay.ai" in text:
             hits.append(path)
-    assert set(hits) == {
-        PLUGIN / "README.md",
-        PLUGIN / ".cursor-plugin" / "plugin.json",
-    }
+    assert hits == [PLUGIN / "README.md"]
     mcp = MCP_JSON.read_text()
     assert STAGE_ORIGIN not in mcp
     assert MCP_URL_TEMPLATE in mcp
