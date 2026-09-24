@@ -2,7 +2,7 @@
   "mcpServers": {
     "botrelay": {
       "type": "http",
-      "url": "https://api.botrelay.ai/mcp/",
+      "url": "${API_BASE_URL}/mcp/",
       "headers": {
         "Authorization": "Bearer ${BOTRELAY_API_KEY}"
       }
