@@ -45,7 +45,7 @@ Performing local decryption of secrets requires the `botrelay-cli` Python packag
 
    Reload the BotRelay MCP server after saving the key. Under MCPs, botrelay should show a green status with `3 tools enabled`: `get_vault`, `list_secrets`, and `get_secret`.
 
-5. In chat, use **Try in Chat** or the `/botrelay-login` command. The prompt is: “Log into BotRelay and get the vault information.” The agent confirms `botrelay-cli` and `agent.env` on this machine, then calls hosted `get_vault`.
+5. In a Cursor chat, use `/botrelay-login` or prompt: “Log into BotRelay and get the vault information.” The agent confirms `botrelay-cli` and `agent.env` on this machine, then calls hosted `get_vault`.
 
    During the first login, the agent checks whether `~/.venvs/botrelay/bin/botrelay` exists (including `botrelay agent decrypt`) and whether `~/.config/botrelay/agent.env` exists. It does not import `botrelay_mcp`. If `get_vault` already succeeds, it skips install and configure. Otherwise it installs with `pip install -U botrelay-cli`, runs `botrelay agent configure` (a real TTY with desktop handoff, or secure secret inputs and `--api-url`, `--api-key`, `--vault-key`), and calls `get_vault`. It reports only the vault id, name, and labels.
 
