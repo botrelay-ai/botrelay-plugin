@@ -36,7 +36,7 @@
       "API_BASE_URL": {
         "type": "string",
         "title": "API base URL",
-        "description": "Origin of the hosted BotRelay API. Production is https://api.botrelay.ai. For stage dogfood, select https://stage.botrelay.ai and use a stage agent API key. Hosted MCP is this origin plus /mcp/ (trailing slash). Do not include /mcp/ in this value.",
+        "description": "Base URL of BotRelay API. Do not include /mcp/ in this value.",
         "default": "https://api.botrelay.ai",
         "enum": [
           "https://api.botrelay.ai",
@@ -45,8 +45,8 @@
       },
       "BOTRELAY_API_KEY": {
         "type": "string",
-        "title": "Agent API key",
-        "description": "BotRelay agent API key (brt_live_…). Sent only as Authorization: Bearer to hosted MCP at whatever API_BASE_URL is configured (default https://api.botrelay.ai, so https://api.botrelay.ai/mcp/). Use a key issued for that environment. Do not enter the vault key."
+        "title": "API key",
+        "description": "The API key (brt_live_…) generated during vault creation." 
       }
     },
     "required": ["BOTRELAY_API_KEY"]
