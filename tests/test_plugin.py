@@ -6,19 +6,22 @@ from pathlib import Path
 PLUGIN = Path(__file__).resolve().parents[1]
 CURSOR_MANIFEST = PLUGIN / ".cursor-plugin" / "plugin.json"
 MCP_JSON = PLUGIN / "mcp.json"
-HOSTED_MCP_URL = "https://api.botrelay.ai/mcp/"
+PROD_ORIGIN = "https://api.botrelay.ai"
+STAGE_ORIGIN = "https://stage.botrelay.ai"
+HOSTED_MCP_URL = f"{PROD_ORIGIN}/mcp/"
+MCP_URL_TEMPLATE = "${API_BASE_URL}/mcp/"
 
 
 def _load(path: Path) -> dict:
     return json.loads(path.read_text())
 
 
-def test_cursor_manifest_declares_api_key_variable_only() -> None:
+def test_cursor_manifest_declares_api_base_url_and_api_key() -> None:
     manifest = _load(CURSOR_MANIFEST)
     raw = CURSOR_MANIFEST.read_text()
     assert manifest["name"] == "botrelay"
     assert manifest["displayName"] == "BotRelay"
-    assert manifest["version"] == "0.2.0"
+    assert manifest["version"] == "0.3.0"
     assert manifest["logo"] == "assets/botrelay-logo-marketplace.png"
     logo = PLUGIN / manifest["logo"]
     assert logo.is_file()
@@ -36,11 +39,20 @@ def test_cursor_manifest_declares_api_key_variable_only() -> None:
     assert not extra
     variables = manifest["variables"]
     assert variables["type"] == "object"
-    assert set(variables["properties"]) == {"BOTRELAY_API_KEY"}
+    assert set(variables["properties"]) == {"API_BASE_URL", "BOTRELAY_API_KEY"}
     assert variables["required"] == ["BOTRELAY_API_KEY"]
+    base_url = variables["properties"]["API_BASE_URL"]
+    assert base_url["type"] == "string"
+    assert base_url["title"] == "API base URL"
+    assert base_url["default"] == PROD_ORIGIN
+    assert "enum" not in base_url
+    assert base_url["description"] == (
+        "Base URL of BotRelay API. Do not include /mcp/ in this value."
+    )
     api_key = variables["properties"]["BOTRELAY_API_KEY"]
     assert api_key["type"] == "string"
-    assert "vault key" in api_key["description"].lower()
+    assert api_key["title"] == "API key"
+    assert "enum" not in api_key
     assert "default" not in api_key
     assert "BOTRELAY_VAULT_KEY" not in raw
     assert "brt_live_" not in raw or "brt_live_…" in raw
@@ -50,7 +62,10 @@ def test_mcp_json_is_hosted_http_with_bearer_api_key_only() -> None:
     server = _load(MCP_JSON)["mcpServers"]["botrelay"]
     assert set(server) == {"type", "url", "headers"}
     assert server["type"] == "http"
-    assert server["url"] == HOSTED_MCP_URL
+    assert server["url"] == MCP_URL_TEMPLATE
+    assert server["url"].endswith("/mcp/")
+    assert PROD_ORIGIN not in server["url"]
+    assert STAGE_ORIGIN not in server["url"]
     assert server["headers"] == {"Authorization": "Bearer ${BOTRELAY_API_KEY}"}
     raw = MCP_JSON.read_text()
     assert "command" not in server
@@ -73,11 +88,15 @@ def test_readme_documents_hosted_mcp_and_local_unlock() -> None:
     assert "botrelay agent configure" in readme
     assert ".config/botrelay/agent.env" in readme
     assert "0600" in readme
-    assert "Try in Chat" in readme
     assert "/botrelay-login" in readme
     assert "Log into BotRelay and get the vault information." in readme
     assert "Plugins → Configure" in readme
     assert HOSTED_MCP_URL in readme
+    assert MCP_URL_TEMPLATE in readme
+    assert "API_BASE_URL" in readme
+    assert STAGE_ORIGIN in readme
+    assert "stage agent API key" in readme
+    assert "private MCP config" not in readme
     assert "Bearer" in readme
     assert "${BOTRELAY_API_KEY}" in readme
     assert "botrelay agent decrypt" in readme
@@ -87,6 +106,8 @@ def test_readme_documents_hosted_mcp_and_local_unlock() -> None:
     assert "deprecated" in readme.lower()
     how = readme.split("## How it works", 1)[1].split("## ", 1)[0]
     assert HOSTED_MCP_URL in how
+    assert MCP_URL_TEMPLATE in how
+    assert STAGE_ORIGIN in how
     assert "Authorization: Bearer" in how
     assert "agent.env" in how
     assert "does not start a command" in how
@@ -102,6 +123,8 @@ def test_readme_documents_hosted_mcp_and_local_unlock() -> None:
     assert "Plugins → Configure" in trouble
     assert '"type": "http"' in trouble
     assert "https://api.botrelay.ai/mcp/" in trouble
+    assert MCP_URL_TEMPLATE in trouble
+    assert "API_BASE_URL" in trouble
     assert "trailing slash" in trouble.lower()
     assert "get_secret" in trouble
     assert "botrelay agent decrypt" in trouble
@@ -134,7 +157,9 @@ def test_readme_documents_hosted_mcp_and_local_unlock() -> None:
     assert "new device" in grok
     assert "Plugins → Configure" in grok
     assert "[Grok Bot](#grok-bot)" in readme.split("## Grok Bot", 1)[0]
-    assert readme.count("stage.botrelay.ai") == 1
+    configure = readme.split("## Install", 1)[1].split("## How it works", 1)[0]
+    assert STAGE_ORIGIN in configure
+    assert "API_BASE_URL" in configure
 
 
 def test_skill_and_login_teach_hosted_mcp_and_local_decrypt() -> None:
@@ -225,7 +250,7 @@ def test_skill_and_rule_frontmatter() -> None:
     assert "botrelay agent decrypt" in command
 
 
-def test_stage_host_is_readme_only() -> None:
+def test_stage_host_is_a_documented_origin_not_hardcoded_in_mcp() -> None:
     skip_suffixes = {".svg", ".png", ".pyc"}
     skip_dirs = {".pytest_cache", "__pycache__", "tests"}
     hits: list[Path] = []
@@ -238,6 +263,9 @@ def test_stage_host_is_readme_only() -> None:
         if "stage.botrelay.ai" in text:
             hits.append(path)
     assert hits == [PLUGIN / "README.md"]
+    mcp = MCP_JSON.read_text()
+    assert STAGE_ORIGIN not in mcp
+    assert MCP_URL_TEMPLATE in mcp
 
 
 def test_plugin_tree_has_no_real_tokens() -> None:
