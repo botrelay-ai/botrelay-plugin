@@ -1,7 +1,7 @@
 {
   "name": "botrelay",
   "displayName": "BotRelay",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "A password manager built for AI agents. Hosted MCP returns sealed secrets; botrelay-cli decrypts them on your machine. Give agents their own vault, only the secrets they need, and tools that keep the vault key local. Visit https://botrelay.ai for more information.",
   "author": {
     "name": "BotRelay"

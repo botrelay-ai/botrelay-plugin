@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import re
+import subprocess
 from pathlib import Path
 
 PLUGIN = Path(__file__).resolve().parents[1]
@@ -21,7 +23,7 @@ def test_cursor_manifest_declares_api_base_url_and_api_key() -> None:
     raw = CURSOR_MANIFEST.read_text()
     assert manifest["name"] == "botrelay"
     assert manifest["displayName"] == "BotRelay"
-    assert manifest["version"] == "0.3.0"
+    assert manifest["version"] == "0.3.1"
     assert manifest["logo"] == "assets/botrelay-logo-marketplace.png"
     logo = PLUGIN / manifest["logo"]
     assert logo.is_file()
@@ -220,6 +222,59 @@ def test_marketplace_points_at_plugin_root() -> None:
     assert "botrelay-mcp" not in blob
     assert "local MCP" not in blob
     assert "sealed" in blob.lower()
+
+
+def test_skill_enters_web_passwords_through_the_clipboard() -> None:
+    skill = (PLUGIN / "skills" / "botrelay-secrets" / "SKILL.md").read_text()
+    section = skill.split("## Entering a password into a web page", 1)[1].split("## ", 1)[0]
+    how = skill.split("## How to use a secret", 1)[1].split("## ", 1)[0]
+    assert "Entering a password into a web page" in how
+    assert "browser form fill" not in how.lower()
+    assert "do not use browser form-fill tools to write `agent.env`" in how.lower()
+    assert "xclip -selection clipboard" in section
+    assert "-loops" in section
+    assert "wl-copy" in section
+    assert "--paste-once" in section
+    assert "pbcopy" in section
+    assert "| clip" in section
+    assert "Set-Clipboard" in section
+    assert "Ctrl+V" in section
+    assert "Cmd+V" in section
+    assert "address bar" in section.lower()
+    assert "masked" in section.lower()
+    assert "shared VM" in section
+    assert "jq -r" in section
+    programs = re.findall(r'python3? -c "([^"]+)"', section)
+    assert len(programs) == 5
+    assert len(set(programs)) == 1
+    program = programs[0]
+    payload = json.dumps(
+        {
+            "username": "octocat",
+            "password": "Pike-place ",
+            "label": "github",
+            "secret_type": "password",
+        },
+        indent=2,
+    ) + "\n"
+    proc = subprocess.run(
+        ["python3", "-c", program],
+        input=payload.encode(),
+        capture_output=True,
+        check=False,
+    )
+    assert proc.returncode == 0
+    assert proc.stdout == "Pike-place ".encode()
+    assert proc.stderr.decode() == "octocat\n11\n"
+    refused = subprocess.run(
+        ["python3", "-c", program],
+        input=b'{"key":"sk-test","secret_type":"api_key"}\n',
+        capture_output=True,
+        check=False,
+    )
+    assert refused.returncode != 0
+    assert refused.stdout == b""
+    assert b"sk-test" not in refused.stderr
 
 
 def test_skill_and_rule_frontmatter() -> None:

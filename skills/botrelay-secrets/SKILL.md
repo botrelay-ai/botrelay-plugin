@@ -1,6 +1,6 @@
 ---
 name: botrelay-secrets
-description: Secure password vault for AI agents. Use when logging into BotRelay, loading vault information, calling get_vault, list_secrets, or get_secret, decrypting a sealed secret with botrelay agent decrypt, or doing one-time setup of ~/.venvs/botrelay and agent.env on the shared Grok VM. Never paste API or vault keys into chat.
+description: Secure password vault for AI agents. Use when logging into BotRelay, loading vault information, calling get_vault, list_secrets, or get_secret, decrypting a sealed secret with botrelay agent decrypt, entering a decrypted password into a web page, or doing one-time setup of ~/.venvs/botrelay and agent.env on the shared Grok VM. Never paste API or vault keys into chat.
 ---
 
 # BotRelay secrets
@@ -121,10 +121,64 @@ Stdin works the same way: `botrelay agent decrypt < "$sealed"`. Decrypt output i
 Then:
 
 1. Call `list_secrets` (or `get_vault`) and pick a `label`.
-2. Run `botrelay agent get <label>`, or call `get_secret` and pass that sealed JSON to `botrelay agent decrypt`.
-3. Use the fields **in the tool that performs the action**: browser form fill for a site login, HTTP header, SDK client. Do not narrate the values. Browser form fill is for using a decrypted secret at a site. Do not use browser form-fill tools to write `agent.env`.
+2. Run `botrelay agent get <label>`, or call `get_secret` and pass that sealed JSON to `botrelay agent decrypt`. When the secret is a password for a web page, run that command only as the clipboard pipe in **Entering a password into a web page**, so the password is not printed.
+3. Use the fields **in the tool that performs the action**. For a password on a web page, follow **Entering a password into a web page**: the clipboard is how that password gets into the form. An HTTP header or SDK client takes the field inside that tool. Do not narrate the values. Do not use browser form-fill tools to write `agent.env`.
 4. Delete any sealed temp file. Do not commit it.
 5. If login needs a human (CAPTCHA, 2FA, magic link), stop and hand the desktop or a secure prompt back. Do not ask the user to paste the vault password into chat.
+
+## Entering a password into a web page
+
+The clipboard is how a decrypted password gets into a web page. Click the masked password field, paste once, check the masked length, then clear the clipboard. Do not look for a form-fill tool. Do not type the password. Do not echo it, and do not put it in a command argument, chat, log, screenshot, or tool-call text.
+
+`botrelay agent get <label>` writes indented JSON to stdout and a trailing newline (`botrelay-cli` 0.1.2, `json.dump(..., indent=2)`). A password secret has `username`, `password`, `label`, and `secret_type` set to `password`. Do not run that command unless its stdout is the pipe below. Parse the JSON in that pipe and write only the `password` bytes to the clipboard tool, with no extra newline (`jq -r` adds one). Do not cut the field out with the shell. Stderr prints the username, then the character count. Use those two lines. The password itself stays on the pipe. If the process exits with `not a password secret`, stop.
+
+Do not limit how many times the clipboard can be read. A clipboard manager reads it too. Do not pass `-loops` to `xclip` or `--paste-once` to `wl-copy`.
+
+Click the password field first and confirm the characters are masked. Never paste into the address bar, a search box, or any field that shows text in plain view. On Windows the console script is `~/.venvs/botrelay/Scripts/botrelay.exe`. Use `python` there when `python3` is not on PATH. If `xclip` or `wl-copy` is missing, install it. Do not type the password instead.
+
+Linux X11:
+
+```bash
+~/.venvs/botrelay/bin/botrelay agent get <label> | python3 -c "import json,sys; doc=json.load(sys.stdin); pw=doc['password'] if doc.get('secret_type')=='password' else sys.exit('not a password secret'); sys.stderr.write(doc.get('username','')+'\n'+str(len(pw))+'\n'); sys.stdout.buffer.write(pw.encode())" | xclip -selection clipboard
+```
+
+Wayland:
+
+```bash
+~/.venvs/botrelay/bin/botrelay agent get <label> | python3 -c "import json,sys; doc=json.load(sys.stdin); pw=doc['password'] if doc.get('secret_type')=='password' else sys.exit('not a password secret'); sys.stderr.write(doc.get('username','')+'\n'+str(len(pw))+'\n'); sys.stdout.buffer.write(pw.encode())" | wl-copy
+```
+
+macOS:
+
+```bash
+~/.venvs/botrelay/bin/botrelay agent get <label> | python3 -c "import json,sys; doc=json.load(sys.stdin); pw=doc['password'] if doc.get('secret_type')=='password' else sys.exit('not a password secret'); sys.stderr.write(doc.get('username','')+'\n'+str(len(pw))+'\n'); sys.stdout.buffer.write(pw.encode())" | pbcopy
+```
+
+Windows Command Prompt, last stage `clip`:
+
+```bat
+"%USERPROFILE%\.venvs\botrelay\Scripts\botrelay.exe" agent get <label> | python -c "import json,sys; doc=json.load(sys.stdin); pw=doc['password'] if doc.get('secret_type')=='password' else sys.exit('not a password secret'); sys.stderr.write(doc.get('username','')+'\n'+str(len(pw))+'\n'); sys.stdout.buffer.write(pw.encode())" | clip
+```
+
+Windows PowerShell, last stage `Set-Clipboard`:
+
+```powershell
+& "$env:USERPROFILE\.venvs\botrelay\Scripts\botrelay.exe" agent get <label> | python -c "import json,sys; doc=json.load(sys.stdin); pw=doc['password'] if doc.get('secret_type')=='password' else sys.exit('not a password secret'); sys.stderr.write(doc.get('username','')+'\n'+str(len(pw))+'\n'); sys.stdout.buffer.write(pw.encode())" | Set-Clipboard
+```
+
+Paste once: Ctrl+V on Linux and Windows, Cmd+V on macOS.
+
+Before submitting, count the masked characters in the password field. The count must match the number on stderr. If the field is empty or the count is wrong, clear the field and paste again. Do not submit until it matches.
+
+Clear the clipboard as soon as the count matches. Also clear it if you stop, the login fails, or you abort:
+
+- Linux X11: `printf '' | xclip -selection clipboard`
+- Wayland: `wl-copy --clear`
+- macOS: `pbcopy < /dev/null`
+- Windows Command Prompt: `clip < NUL`
+- Windows PowerShell: `Set-Clipboard -Value ''`
+
+On a shared VM every agent and process can read the clipboard. Keep the password there only for the paste.
 
 ## Never do this
 
