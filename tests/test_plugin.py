@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import json
+import re
+import shutil
+import subprocess
 from pathlib import Path
 
 PLUGIN = Path(__file__).resolve().parents[1]
@@ -21,7 +24,7 @@ def test_cursor_manifest_declares_api_base_url_and_api_key() -> None:
     raw = CURSOR_MANIFEST.read_text()
     assert manifest["name"] == "botrelay"
     assert manifest["displayName"] == "BotRelay"
-    assert manifest["version"] == "0.3.0"
+    assert manifest["version"] == "0.3.2"
     assert manifest["logo"] == "assets/botrelay-logo-marketplace.png"
     logo = PLUGIN / manifest["logo"]
     assert logo.is_file()
@@ -83,7 +86,11 @@ def test_mcp_json_is_hosted_http_with_bearer_api_key_only() -> None:
 
 def test_readme_documents_hosted_mcp_and_local_unlock() -> None:
     readme = (PLUGIN / "README.md").read_text()
+    assert "uv tool install botrelay-cli" in readme
+    assert "uv tool upgrade botrelay-cli" in readme
+    assert "curl -LsSf https://astral.sh/uv/install.sh | sh" in readme
     assert "pip install -U botrelay-cli" in readme
+    assert "If uv cannot be installed" in readme
     assert "pip install -U botrelay-mcp" not in readme
     assert "botrelay agent configure" in readme
     assert ".config/botrelay/agent.env" in readme
@@ -138,8 +145,10 @@ def test_readme_documents_hosted_mcp_and_local_unlock() -> None:
     assert "own desktop and browser" in grok
     assert "~/.venvs/botrelay" in grok
     assert "~/.config/botrelay/agent.env" in grok
+    assert "uv tool install botrelay-cli" in grok
+    assert "Do not reinstall" in grok
     assert "import botrelay_mcp" not in grok
-    assert "pip install -U botrelay-cli" in grok
+    assert "pip install -U botrelay-cli" not in grok
     assert "0600" in grok
     assert "do not paste the api key or vault key into chat" in grok.lower()
     assert "hand the desktop to the user" in grok.lower()
@@ -175,7 +184,16 @@ def test_skill_and_login_teach_hosted_mcp_and_local_decrypt() -> None:
         assert "import botrelay_mcp" not in text, path
         assert "botrelay-mcp" in text, path
         assert ".config/botrelay/agent.env" in text, path
-        assert "pip install -U botrelay-cli" in text, path
+        assert "uv tool install botrelay-cli" in text, path
+        assert "uv tool upgrade botrelay-cli" in text, path
+        assert "command -v botrelay" in text, path
+        assert "~/.local/bin" in text, path
+        assert "uv tool update-shell" in text, path
+        assert "curl -LsSf https://astral.sh/uv/install.sh | sh" in text, path
+        assert 'powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"' in text, path
+        assert "If uv cannot be installed" in text, path
+        assert "python3 -m venv ~/.venvs/botrelay" in text, path
+        assert "Do not reinstall" in text, path
         assert "pip install -U botrelay-mcp" not in text, path
         assert HOSTED_MCP_URL in text, path
         assert "API key (`brt_live_…`)" in text, path
@@ -220,6 +238,66 @@ def test_marketplace_points_at_plugin_root() -> None:
     assert "botrelay-mcp" not in blob
     assert "local MCP" not in blob
     assert "sealed" in blob.lower()
+
+
+def test_skill_enters_web_passwords_through_the_clipboard() -> None:
+    skill = (PLUGIN / "skills" / "botrelay-secrets" / "SKILL.md").read_text()
+    section = skill.split("## Entering a password into a web page", 1)[1].split("## ", 1)[0]
+    how = skill.split("## How to use a secret", 1)[1].split("## ", 1)[0]
+    assert "Entering a password into a web page" in how
+    assert "browser form fill" not in how.lower()
+    assert "do not use browser form-fill tools to write `agent.env`" in how.lower()
+    assert "xclip -selection clipboard" in section
+    assert "-loops" in section
+    assert "wl-copy" in section
+    assert "--paste-once" in section
+    assert "pbcopy" in section
+    assert "| clip" in section
+    assert "Set-Clipboard" in section
+    assert "Ctrl+V" in section
+    assert "Cmd+V" in section
+    assert "address bar" in section.lower()
+    assert "masked" in section.lower()
+    assert "shared VM" in section
+    assert "jq -r" in section
+    assert "~/.venvs/botrelay" not in section
+    assert "uv run --no-project --quiet python" in section
+    programs = re.findall(r'uv run --no-project --quiet python -c "([^"]+)"', section)
+    assert len(programs) == 5
+    assert len(set(programs)) == 1
+    program = programs[0]
+    payload = json.dumps(
+        {
+            "username": "octocat",
+            "password": "Pike-place ",
+            "label": "github",
+            "secret_type": "password",
+        },
+        indent=2,
+    ) + "\n"
+    runners = [["python3", "-c", program]]
+    uv = shutil.which("uv")
+    if uv:
+        runners.append([uv, "run", "--no-project", "--quiet", "python", "-c", program])
+    for argv in runners:
+        proc = subprocess.run(
+            argv,
+            input=payload.encode(),
+            capture_output=True,
+            check=False,
+        )
+        assert proc.returncode == 0, argv
+        assert proc.stdout == "Pike-place ".encode(), argv
+        assert proc.stderr.decode() == "octocat\n11\n", argv
+        refused = subprocess.run(
+            argv,
+            input=b'{"key":"sk-test","secret_type":"api_key"}\n',
+            capture_output=True,
+            check=False,
+        )
+        assert refused.returncode != 0, argv
+        assert refused.stdout == b"", argv
+        assert b"sk-test" not in refused.stderr, argv
 
 
 def test_skill_and_rule_frontmatter() -> None:

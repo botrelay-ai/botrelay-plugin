@@ -12,21 +12,45 @@ This repository is the **public Cursor plugin** only. It does not contain the CL
 
 ## Install
 
-Performing local decryption of secrets requires the `botrelay-cli` Python package and a `~/.config/botrealy/agent.env` file containing the vault key. Depending on the agent, this may be a hosted virtual machine or the local PC/Mac where Cursor and/or Grok Bot is installed. The first two steps in the following instructions will need to be performed on each machine where secret decryption is expected:
+Performing local decryption of secrets requires the `botrelay-cli` package and a `~/.config/botrelay/agent.env` file containing the vault key. Depending on the agent, this may be a hosted virtual machine or the local PC/Mac where Cursor and/or Grok Bot is installed. The first two steps in the following instructions will need to be performed on each machine where secret decryption is expected:
 
-1. From a terminal, install the CLI:
+1. From a terminal, install the CLI with uv. uv brings its own Python, so Python does not need to be preinstalled. If `uv` is missing, install it first.
+
+   macOS and Linux:
+
+   ```bash
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   source "$HOME/.local/bin/env"
+   ```
+
+   Windows PowerShell:
+
+   ```powershell
+   powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+   ```
+
+   Then:
+
+   ```bash
+   uv tool install botrelay-cli
+   uv tool update-shell
+   ```
+
+   uv puts `botrelay` in `~/.local/bin`. If `command -v botrelay` fails, put that directory on `PATH` (`export PATH="$HOME/.local/bin:$PATH"`). Upgrade later with `uv tool upgrade botrelay-cli`.
+
+   If `~/.venvs/botrelay/bin/botrelay` already works, keep it. Do not reinstall. If uv cannot be installed, the fallback needs a system Python:
 
    ```bash
    python3 -m venv ~/.venvs/botrelay
    ~/.venvs/botrelay/bin/pip install -U botrelay-cli
    ```
 
-   On Windows the console script is `~/.venvs/botrelay/Scripts/botrelay.exe`. Activating the venv in a terminal does not change the `PATH` Cursor or Grok uses. This plugin does not launch that interpreter. Hosted MCP is a URL, not a local process.
+   This plugin does not launch that interpreter. Hosted MCP is a URL, not a local process.
 
 2. Store the CLI credentials locally. The CLI prompts in the terminal. Do not paste the API key or vault key into chat:
 
    ```bash
-   ~/.venvs/botrelay/bin/botrelay agent configure
+   botrelay agent configure
    ```
 
    `botrelay agent configure` creates `~/.config/botrelay/agent.env` with mode `0600` and `KEY=VALUE` lines for:
@@ -52,7 +76,7 @@ Performing local decryption of secrets requires the `botrelay-cli` Python packag
 
 5. In a Cursor chat, use `/botrelay-login` or prompt: “Log into BotRelay and get the vault information.” The agent confirms `botrelay-cli` and `agent.env` on this machine, then calls hosted `get_vault`.
 
-   During the first login, the agent checks whether `~/.venvs/botrelay/bin/botrelay` exists (including `botrelay agent decrypt`) and whether `~/.config/botrelay/agent.env` exists. It does not import `botrelay_mcp`. If `get_vault` already succeeds, it skips install and configure. Otherwise it installs with `pip install -U botrelay-cli`, runs `botrelay agent configure` (a real TTY with desktop handoff, or secure secret inputs and `--api-url`, `--api-key`, `--vault-key`), and calls `get_vault`. It reports only the vault id, name, and labels.
+   During the first login, the agent checks whether `botrelay` is on `PATH` (`command -v botrelay` or `botrelay --version`, including `botrelay agent decrypt`) and whether `~/.config/botrelay/agent.env` exists. A working `~/.venvs/botrelay/bin/botrelay` counts. Do not reinstall that. It does not import `botrelay_mcp`. If `get_vault` already succeeds, it skips install and configure. Otherwise it installs with `uv tool install botrelay-cli`, runs `botrelay agent configure` (a real TTY with desktop handoff, or secure secret inputs and `--api-url`, `--api-key`, `--vault-key`), and calls `get_vault`. It reports only the vault id, name, and labels.
 
    **NOTE:** For a Grok Bot agent, CLI setup is performed on the shared VM, not your local machine. See [Grok Bot](#grok-bot).
 
@@ -85,14 +109,14 @@ This machine
 Unlock on this machine:
 
 ```bash
-~/.venvs/botrelay/bin/botrelay agent get <label>
+botrelay agent get <label>
 ```
 
 Or pass sealed JSON from `get_secret` to the CLI, on stdin or as a file:
 
 ```bash
-~/.venvs/botrelay/bin/botrelay agent decrypt sealed.json
-~/.venvs/botrelay/bin/botrelay agent decrypt < sealed.json
+botrelay agent decrypt sealed.json
+botrelay agent decrypt < sealed.json
 ```
 
 Decrypt output is the typed secret. Use it in the action that needs it. Do not paste it into chat.
@@ -109,7 +133,7 @@ If the agent API key changes, also update `BOTRELAY_API_KEY` under **Plugins →
 
 ## Grok Bot
 
-Grok Bot agents run browser tasks on a shared virtual machine. Each agent has its own desktop and browser window on that VM. They share one filesystem there, including `~/.venvs/botrelay` and `~/.config/botrelay/agent.env`. The VM is not your laptop. Cursor's `~/.venvs/botrelay` and `~/.config/botrelay/agent.env` on a local Mac/PC do not carry over. `botrelay agent configure` in Cursor on a local Mac/PC does not create `agent.env` on the Grok VM. Configuring the Grok VM does not create `agent.env` on the Mac.
+Grok Bot agents run browser tasks on a shared virtual machine. Each agent has its own desktop and browser window on that VM. They share one filesystem there, including `botrelay` on `PATH` (`~/.local/bin` from `uv tool install`) and `~/.config/botrelay/agent.env`. An existing `~/.venvs/botrelay` on that VM counts. The VM is not your laptop. Cursor's CLI install and `~/.config/botrelay/agent.env` on a local Mac/PC do not carry over. `botrelay agent configure` in Cursor on a local Mac/PC does not create `agent.env` on the Grok VM. Configuring the Grok VM does not create `agent.env` on the Mac.
 
 For BotRelay to work for those agents:
 
@@ -117,19 +141,24 @@ For BotRelay to work for those agents:
 
 2. Set `BOTRELAY_API_KEY` under **Plugins → Configure** for the Grok account (agent API key only). `API_BASE_URL` defaults to production `https://api.botrelay.ai`. For stage dogfood, set `API_BASE_URL` to `https://stage.botrelay.ai` and use a stage agent API key. Do not enter the vault key. Reload MCP and confirm `get_vault` works. Those plugin variables are account configuration, not a file on the VM.
 
-3. On the Grok virtual machine, once, open any agent's computer (it is the same host). Check whether `~/.venvs/botrelay/bin/botrelay` can run `botrelay agent decrypt` and whether `~/.config/botrelay/agent.env` exists. If both are in place and `get_vault` or `botrelay agent vault` succeeds, stop. Skip install and configure. That one setup serves every agent on the Grok VM. They do not each install or configure.
+3. On the Grok virtual machine, once, open any agent's computer (it is the same host). Check whether `botrelay` on `PATH` (or `~/.venvs/botrelay/bin/botrelay`) can run `botrelay agent decrypt` and whether `~/.config/botrelay/agent.env` exists. If both are in place and `get_vault` or `botrelay agent vault` succeeds, stop. Skip install and configure. That one setup serves every agent on the Grok VM. They do not each install or configure. Do not reinstall a working legacy venv.
 
-4. If the CLI is missing, install once on that host:
+4. If the CLI is missing, install once on that host. uv brings its own Python:
 
    ```bash
-   python3 -m venv ~/.venvs/botrelay
-   ~/.venvs/botrelay/bin/pip install -U botrelay-cli
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   source "$HOME/.local/bin/env"
+   uv tool install botrelay-cli
+   uv tool update-shell
+   export PATH="$HOME/.local/bin:$PATH"
    ```
+
+   If uv cannot be installed, use the venv fallback in [Install](#install).
 
 5. If `agent.env` is missing or the vault call fails, run configure on that VM. Prefer a real TTY. Hand the desktop to the user so they type the hidden prompts. Do not paste the API key or vault key into chat.
 
    ```bash
-   ~/.venvs/botrelay/bin/botrelay agent configure
+   botrelay agent configure
    ```
 
    The CLI prompts for three labels only:
@@ -140,7 +169,7 @@ For BotRelay to work for those agents:
 
    It writes `~/.config/botrelay/agent.env` with mode `0600`. If there is no TTY, host secure secret inputs for those three labels, then run `botrelay agent configure` with `--api-url`, `--api-key`, and `--vault-key` without echoing the values. Do not use browser form-fill tools to write `agent.env`.
 
-After that, every agent on that Grok account can use the vault. They share the one venv and `agent.env` on the VM. Each agent decrypts with `botrelay agent decrypt` or `botrelay agent get <label>`.
+After that, every agent on that Grok account can use the vault. They share the one CLI and `agent.env` on the VM. Each agent decrypts with `botrelay agent decrypt` or `botrelay agent get <label>`.
 
 Cursor on a Mac is a separate machine. The same API key and vault key are fine when both machines use the same agent vault. You are writing a second local `agent.env` on the Grok host. Set **Plugins → Configure** on the Mac account as well if that Cursor should call hosted MCP.
 
@@ -162,9 +191,9 @@ That is the soft-launch contract. `get_secret` returns ciphertext and metadata. 
 
 ### CLI cannot decrypt
 
-`~/.config/botrelay/agent.env` is missing, unreadable, or the vault key does not match this vault. Run `~/.venvs/botrelay/bin/botrelay agent configure` on **this** machine. On a Grok agent, a file on the user's Mac does not count. See [Grok Bot](#grok-bot).
+`~/.config/botrelay/agent.env` is missing, unreadable, or the vault key does not match this vault. Run `botrelay agent configure` on **this** machine. On a Grok agent, a file on the user's Mac does not count. See [Grok Bot](#grok-bot).
 
-If `botrelay agent decrypt` is not a command, upgrade the CLI (`pip install -U botrelay-cli`). Do not install `botrelay-mcp`.
+If `botrelay agent decrypt` is not a command, upgrade the CLI (`uv tool upgrade botrelay-cli`). Do not install `botrelay-mcp`.
 
 ### Works in Cursor, fails in a Grok agent
 
